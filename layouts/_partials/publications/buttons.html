@@ -1,64 +1,20 @@
 {{/*
-  buttons.html — PDF, arXiv, DOI, and BibTeX buttons for a publication.
+  Renders the action buttons for a publication: PDF, ArXiv, DOI, BibTeX.
 
-  The BibTeX button carries the generated BibTeX in a data-bibtex attribute.
-  It targets the single shared #bibtex-modal (defined in bibtex_modal.html,
-  included once per page in list.html and single.html).
+  Usage:
+    {{ partial "publications/buttons.html" . }}
+    (pass the publication page as context)
 
-  Bootstrap's 'show.bs.modal' event handler in bibtex_modal.html reads
-  data-bibtex from the triggering button and fills the modal's textarea.
-  This avoids the stacking-context problem of embedding a modal inside
-  a .card element (which sets position:relative and traps the modal).
+  PDF resolution order:
+    1. Full URL (http/https/protocol-relative) — used as-is
+    2. Root-relative path (/papers/foo.pdf) — passed through relURL
+    3. Page bundle resource (filename only) — resolved via .Resources.GetMatch
+       This supports page bundles: put the PDF next to the index.md and
+       reference it by filename in front matter.
 */}}
 
 {{ $page := . }}
 
-{{/* --- Generate BibTeX string ---
-     Duplicated from bibtex_modal.html. We need it here on the button's
-     data attribute. Consider extracting to a shared partial if it drifts.
-*/}}
-{{ $pubtype := "misc" }}
-{{ with $page.Params.publication_types }}
-  {{ $first := index . 0 }}
-  {{ if eq $first "conference"  }}{{ $pubtype = "inproceedings" }}
-  {{ else if eq $first "journal"     }}{{ $pubtype = "article" }}
-  {{ else if eq $first "preprint"    }}{{ $pubtype = "misc" }}
-  {{ else if eq $first "thesis"      }}{{ $pubtype = "phdthesis" }}
-  {{ else if eq $first "book"        }}{{ $pubtype = "book" }}
-  {{ else if eq $first "bookchapter" }}{{ $pubtype = "incollection" }}
-  {{ end }}
-{{ end }}
-
-{{ $year := $page.Date.Format "2006" }}
-
-{{ $citekey := "Unknown" }}
-{{ with $page.Params.authors }}
-  {{ $firstAuthor := index . 0 }}
-  {{ $parts    := split $firstAuthor " " }}
-  {{ $lastname := index $parts (sub (len $parts) 1) }}
-  {{ $citekey   = printf "%s%s" $lastname $year }}
-{{ end }}
-
-{{ $authorStr := "" }}
-{{ with $page.Params.authors }}
-  {{ $authorStr = delimit . " and " }}
-{{ end }}
-
-{{ $bib := printf "@%s{%s,\n" $pubtype $citekey }}
-{{ $bib  = printf "%s  author    = {%s},\n" $bib $authorStr }}
-{{ $bib  = printf "%s  title     = {%s},\n" $bib $page.Title }}
-{{ $bib  = printf "%s  year      = {%s},\n" $bib $year }}
-{{ with $page.Params.venue     }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.booktitle }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.publisher }}{{ $bib = printf "%s  publisher = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.volume    }}{{ $bib = printf "%s  volume    = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.number    }}{{ $bib = printf "%s  number    = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.pages     }}{{ $bib = printf "%s  pages     = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.doi       }}{{ $bib = printf "%s  doi       = {%s},\n" $bib . }}{{ end }}
-{{ with $page.Params.arxiv     }}{{ $bib = printf "%s  eprint    = {%s},\n" $bib . }}{{ end }}
-{{ $bib  = printf "%s}" $bib }}
-
-{{/* --- Button row --- */}}
 <div class="d-flex flex-wrap gap-1 mt-2">
 
   {{- with $page.Params.pdf }}
@@ -72,41 +28,39 @@
       {{ with $page.Resources.GetMatch $url }}
         {{ $finalURL = .RelPermalink }}
       {{ else }}
+        {{/* Warn at build time rather than silently producing a broken button */}}
         {{ warnf "publications/buttons.html: could not find PDF resource %q in page %s" $url $page.RelPermalink }}
       {{ end }}
     {{ end }}
     {{ with $finalURL }}
-      <a href="{{ . }}"
-         class="btn btn-outline-primary btn-sm"
-         target="_blank"
-         rel="noopener">PDF</a>
+      <a href="{{ . }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+        PDF
+      </a>
     {{ end }}
   {{- end }}
 
   {{- with $page.Params.arxiv }}
-    <a href="https://arxiv.org/abs/{{ . }}"
-       class="btn btn-outline-secondary btn-sm"
-       target="_blank"
-       rel="noopener">arXiv</a>
+    <a href="https://arxiv.org/abs/{{ . }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+      arXiv
+    </a>
   {{- end }}
 
   {{- with $page.Params.doi }}
-    <a href="https://doi.org/{{ . }}"
-       class="btn btn-outline-secondary btn-sm"
-       target="_blank"
-       rel="noopener">DOI</a>
+    <a href="https://doi.org/{{ . }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+      DOI
+    </a>
   {{- end }}
 
   {{/*
-    BibTeX button — targets the single shared modal.
-    The BibTeX string is HTML-escaped and stored in data-bibtex.
-    Bootstrap's show.bs.modal handler in bibtex_modal.html reads it.
+    BibTeX button — triggers a Bootstrap modal defined in bibtex_modal.html.
+    The modal is included once in the page by pub_card.html or single.html;
+    the button here just references it by ID.
+    data-bibtex is written by bibtex_modal.html, not here.
   */}}
   <button type="button"
           class="btn btn-outline-secondary btn-sm"
           data-bs-toggle="modal"
-          data-bs-target="#bibtex-modal"
-          data-bibtex="{{ $bib | htmlEscape }}">
+          data-bs-target="#bibtex-modal-{{ $page.File.UniqueID }}">
     BibTeX
   </button>
 

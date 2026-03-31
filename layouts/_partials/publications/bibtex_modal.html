@@ -1,54 +1,105 @@
 {{/*
-  bibtex_modal.html — a SHARED modal rendered once per page.
+  Renders a Bootstrap modal containing auto-generated BibTeX for a publication,
+  plus a "Copy to clipboard" button.
 
-  Instead of one modal per publication (which causes nesting/stacking
-  context problems when modals are inside .card or .container elements),
-  we render a single modal and populate it via JS when a BibTeX button
-  is clicked.
+  Usage:
+    {{ partial "publications/bibtex_modal.html" . }}
+    (pass the publication page as context)
 
-  Usage: include this partial ONCE, outside any container/card, just
-  before </body>. In practice, put it at the bottom of list.html and
-  single.html inside a {{ define "scripts" }} block won't work for HTML,
-  so we include it in the layout directly after {{ block "main" }}.
+  The modal ID is "bibtex-modal-{{ .File.UniqueID }}" — this must match the
+  data-bs-target in buttons.html.
 
-  Each BibTeX button carries the BibTeX text in a data-bibtex attribute.
-  The modal's JS reads that attribute and fills the textarea.
+  BibTeX generation:
+    - Entry type derived from publication_types[0]
+    - Cite key: FirstAuthorLastnameYear, e.g. "Brown2020"
+    - Year is always taken from .Date (date_precision does not affect BibTeX)
 */}}
 
+{{ $page := . }}
+
+{{/* --- Derive BibTeX entry type from publication_types --- */}}
+{{ $pubtype := "misc" }}
+{{ with $page.Params.publication_types }}
+  {{ $first := index . 0 }}
+  {{ if eq $first "conference"  }}{{ $pubtype = "inproceedings" }}
+  {{ else if eq $first "journal"     }}{{ $pubtype = "article" }}
+  {{ else if eq $first "preprint"    }}{{ $pubtype = "misc" }}
+  {{ else if eq $first "thesis"      }}{{ $pubtype = "phdthesis" }}
+  {{ else if eq $first "book"        }}{{ $pubtype = "book" }}
+  {{ else if eq $first "bookchapter" }}{{ $pubtype = "incollection" }}
+  {{ end }}
+{{ end }}
+
+{{/* --- Build cite key: FirstAuthorLastname + Year --- */}}
+{{ $year := $page.Date.Format "2006" }}
+
+{{ $citekey := "Unknown" }}
+{{ with $page.Params.authors }}
+  {{ $firstAuthor := index . 0 }}
+  {{/* Take the last word of the first author's name as the last name */}}
+  {{ $parts    := split $firstAuthor " " }}
+  {{ $lastname := index $parts (sub (len $parts) 1) }}
+  {{ $citekey   = printf "%s%s" $lastname $year }}
+{{ end }}
+
+{{/* --- Assemble author string (BibTeX uses " and " as separator) --- */}}
+{{ $authorStr := "" }}
+{{ with $page.Params.authors }}
+  {{ $authorStr = delimit . " and " }}
+{{ end }}
+
+{{/* --- Build the BibTeX entry as a string --- */}}
+{{ $bib := printf "@%s{%s,\n" $pubtype $citekey }}
+{{ $bib  = printf "%s  author    = {%s},\n" $bib $authorStr }}
+{{ $bib  = printf "%s  title     = {%s},\n" $bib $page.Title }}
+{{ $bib  = printf "%s  year      = {%s},\n" $bib $year }}
+{{ with $page.Params.venue     }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.booktitle }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.publisher }}{{ $bib = printf "%s  publisher = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.volume    }}{{ $bib = printf "%s  volume    = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.number    }}{{ $bib = printf "%s  number    = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.pages     }}{{ $bib = printf "%s  pages     = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.doi       }}{{ $bib = printf "%s  doi       = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.arxiv     }}{{ $bib = printf "%s  eprint    = {%s},\n" $bib . }}{{ end }}
+{{ $bib  = printf "%s}" $bib }}
+
+{{/* --- Modal markup --- */}}
 <div class="modal fade"
-     id="bibtex-modal"
+     id="bibtex-modal-{{ $page.File.UniqueID }}"
      tabindex="-1"
-     aria-labelledby="bibtex-modal-label"
+     aria-label="BibTeX for {{ $page.Title }}"
      aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
+
       <div class="modal-header">
-        <h5 class="modal-title" id="bibtex-modal-label">BibTeX</h5>
-        <button type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"></button>
+        <h5 class="modal-title">BibTeX</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
+
       <div class="modal-body">
-        <textarea id="bibtex-modal-text"
+        <textarea id="bibtex-text-{{ $page.File.UniqueID }}"
                   class="bibtex-textarea form-control"
                   rows="14"
                   readonly
-                  spellcheck="false"></textarea>
+                  spellcheck="false">{{ $bib }}</textarea>
       </div>
+
       <div class="modal-footer">
+        {{/*
+          Copy button: uses the Clipboard API (supported in all modern browsers).
+          Falls back to selecting the textarea text if the API is unavailable.
+          The button text changes briefly to "Copied!" as feedback.
+        */}}
         <button type="button"
                 class="btn btn-primary btn-sm"
-                id="bibtex-copy-btn"
                 onclick="
-                  var el = document.getElementById('bibtex-modal-text');
+                  var el = document.getElementById('bibtex-text-{{ $page.File.UniqueID }}');
                   if (navigator.clipboard) {
                     navigator.clipboard.writeText(el.value).then(function() {
-                      var btn = document.getElementById('bibtex-copy-btn');
+                      var btn = event.target;
                       btn.textContent = 'Copied!';
-                      setTimeout(function() {
-                        btn.textContent = 'Copy to clipboard';
-                      }, 1500);
+                      setTimeout(function() { btn.textContent = 'Copy to clipboard'; }, 1500);
                     });
                   } else {
                     el.select();
@@ -57,26 +108,9 @@
                 ">
           Copy to clipboard
         </button>
-        <button type="button"
-                class="btn btn-secondary btn-sm"
-                data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
       </div>
+
     </div>
   </div>
 </div>
-
-{{/*
-  This script populates the shared modal with the clicked publication's
-  BibTeX when the modal is about to be shown.
-
-  Bootstrap fires the 'show.bs.modal' event before the modal becomes
-  visible. The relatedTarget property is the button that triggered it,
-  which carries the BibTeX in data-bibtex.
-*/}}
-<script>
-  document.getElementById('bibtex-modal').addEventListener('show.bs.modal', function(e) {
-    var btn    = e.relatedTarget;
-    var bibtex = btn ? btn.getAttribute('data-bibtex') : '';
-    document.getElementById('bibtex-modal-text').value = bibtex || '';
-  });
-</script>
