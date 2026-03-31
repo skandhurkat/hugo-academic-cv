@@ -1,41 +1,117 @@
 {{ define "main" }}
-<div class="container-md">
+
+{{/*
+  Single publication page — full detail view.
+
+  Shows: title, authors, venue/date, all buttons, full abstract, any
+  markdown body content, and metadata table (type, publisher, etc.).
+
+  The BibTeX modal is included via the buttons partial's dependency on
+  bibtex_modal.html. We include it explicitly here since we're not going
+  through pub_card.html.
+*/}}
+
+<div class="container py-4">
   <div class="row">
-    <div class="col">
-      <h1>{{ .Title }}</h1>
-      <p rel="author">{{ partial "author_list.html" (dict "page" . ) }}.</p>
-      {{ with .Date }}
-      <time datetime="{{ .Format "2006-01" }}">{{ .Format "January, 2006" }}</time>
+    <div class="col-lg-9">
+
+      {{/* --- Type badges --- */}}
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        {{ range .Params.publication_types }}
+          <span class="badge rounded-pill text-bg-secondary">{{ . }}</span>
+        {{ end }}
+      </div>
+
+      {{/* --- Title --- */}}
+      <h1 class="mb-2">{{ .Title }}</h1>
+
+      {{/* --- Authors --- */}}
+      <p class="text-muted mb-1">
+        {{ partial "author_list.html" (dict "page" .) }}.
+      </p>
+
+      {{/* --- Venue + date --- */}}
+      {{ $prec := .Params.date_precision | default "month" }}
+      {{ $year := "" }}
+      {{ if eq $prec "year"  }}{{ $year = .Date.Format "2006" }}
+      {{ else if eq $prec "day" }}{{ $year = .Date.Format "January 2, 2006" }}
+      {{ else }}{{ $year = .Date.Format "January 2006" }}{{ end }}
+      <p class="text-muted mb-3" style="font-size: 0.9rem;">
+        {{ with .Params.venue }}{{ . }}{{ end }}
+        {{ with $year }}· <time datetime="{{ $year }}">{{ $year }}</time>{{ end }}
+      </p>
+
+      {{/* --- Action buttons (PDF, arXiv, DOI, BibTeX) --- */}}
+      {{ partial "publications/buttons.html" . }}
+
+      {{/* --- Abstract --- */}}
+      {{ with .Params.abstract }}
+        <h2 class="h5 mt-4 mb-2">Abstract</h2>
+        <div class="pub-abstract-full">
+          {{ . | markdownify }}
+        </div>
       {{ end }}
+
+      {{/* --- Markdown body (full paper content, if provided) ---
+           .Content is the rendered Markdown below the front matter.
+           We only show the section if there's actually content.
+      --- */}}
+      {{ with .Content }}
+        <hr class="my-4">
+        <div class="pub-body">
+          {{ . }}
+        </div>
+      {{ end }}
+
+      {{/* --- Metadata table ---
+           Only shows rows that have values. The publication type row links
+           to the taxonomy term page so readers can find related papers.
+      --- */}}
+      {{ $hasMetadata := or .Params.booktitle .Params.publisher .Params.doi .Params.publication_types }}
+      {{ if $hasMetadata }}
+        <hr class="my-4">
+        <dl class="row" style="font-size: 0.9rem;">
+
+          {{ with .Params.publication_types }}
+            <dt class="col-sm-3 pub-row-heading">Type</dt>
+            <dd class="col-sm-9">
+              {{ range . }}
+                {{/* Link each type to its taxonomy term page */}}
+                {{ $termPage := site.GetPage (printf "/publication_types/%s" .) }}
+                {{ if $termPage }}
+                  <a href="{{ $termPage.RelPermalink }}">{{ . }}</a>
+                {{ else }}
+                  {{ . }}
+                {{ end }}
+              {{ end }}
+            </dd>
+          {{ end }}
+
+          {{ with .Params.booktitle }}
+            <dt class="col-sm-3 pub-row-heading">In</dt>
+            <dd class="col-sm-9">{{ . }}</dd>
+          {{ end }}
+
+          {{ with .Params.publisher }}
+            <dt class="col-sm-3 pub-row-heading">Publisher</dt>
+            <dd class="col-sm-9">{{ . }}</dd>
+          {{ end }}
+
+          {{ with .Params.doi }}
+            <dt class="col-sm-3 pub-row-heading">DOI</dt>
+            <dd class="col-sm-9">
+              <a href="https://doi.org/{{ . }}" target="_blank" rel="noopener">{{ . }}</a>
+            </dd>
+          {{ end }}
+
+        </dl>
+      {{ end }}
+
     </div>
   </div>
-  {{ partial "publications/buttons.html" . }}
-  {{ with .Params.abstract }}
-  <div class="row">
-    <div class="col">
-      <h2>Abstract</h2>
-      {{ . | markdownify }}
-    </div>
-  </div>
-  {{ end }}
-  <div class="row m-2 p-2">
-    {{ with .Params.booktitle }}
-    <div class="col-12 col-md-3 pub-row-heading">Publication</div>
-    <div class="col-12 col-md-9">{{ . }}</div>
-    {{ end }}
-    {{ if (and (.Params.publication_type) (ne .Params.publication_types "0")) }}
-      {{ partial "publications/pub_types.html" $ }}
-      {{ $pub_types := $.Scratch.Get "pub_types" }}
-      <div class="col-12 col-md-3 pub-row-heading">Type</div>
-      <div class="col-12 col-md-9">{{ index $pub_types (int .Params.publication_type) }}</div>
-    {{ end }}
-  </div>
-  {{ with .Content }}
-  <div class="row">
-    <div class="col">
-      {{ . }}
-    </div>
-  </div>
-  {{ end }}
 </div>
+
+{{/* BibTeX modal — must be outside the container for correct Bootstrap positioning */}}
+{{ partial "publications/bibtex_modal.html" . }}
+
 {{ end }}

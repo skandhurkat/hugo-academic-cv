@@ -1,42 +1,102 @@
 baseURL = 'https://example.org/'
-locale = 'en-US'
-title = 'My New Hugo Project'
+languageCode = 'en-US'
+title = 'My New Hugo Site'
 
+# ---------------------------------------------------------------------------
+# Taxonomies
+# Hugo requires you to list ALL taxonomies you want, including any you want
+# to keep from the defaults (tags, categories). Format: singular = 'plural'.
+# The plural form becomes the URL: /publication_types/conference/
+# ---------------------------------------------------------------------------
+[taxonomies]
+  tag              = 'tags'
+  publication_type = 'publication_types'
+
+# ---------------------------------------------------------------------------
+# Navigation menu
+# pageRef is a root-relative path to the section. Hugo resolves it to the
+# section's _index.md. weight controls the order (lower = further left).
+# ---------------------------------------------------------------------------
 [menus]
   [[menus.main]]
-    name = 'Experience'
+    name    = 'Experience'
     pageRef = '/experience'
-    weight = 10
-
+    weight  = 10
   [[menus.main]]
-    name = 'Publications'
+    name    = 'Publications'
     pageRef = '/publications'
-    weight = 20
-
+    weight  = 20
   [[menus.main]]
-    name = 'Patents'
+    name    = 'Patents'
     pageRef = '/patents'
-    weight = 30
-
+    weight  = 30
   [[menus.main]]
-    name = 'Projects'
+    name    = 'Projects'
     pageRef = '/projects'
-    weight = 40
-
+    weight  = 40
   [[menus.main]]
-    name = 'Posts'
+    name    = 'Posts'
     pageRef = '/posts'
-    weight = 50
-
+    weight  = 50
   [[menus.main]]
-    name = 'Contact'
+    name    = 'Contact'
     pageRef = '/contact'
-    weight = 60
+    weight  = 60
 
+# ---------------------------------------------------------------------------
+# Module / version constraint
+# This tells Hugo to refuse to build if the Hugo version is too old.
+# extended = false means we don't need Hugo Extended (which adds Sass/SCSS).
+# We're using plain CSS, so the regular binary is fine.
+# ---------------------------------------------------------------------------
 [module]
   [module.hugoVersion]
     extended = false
-    min = '0.146.0'
+    min      = '0.146.0'
 
-[taxonomies]
-  publication_type = 'publication_type'
+# ---------------------------------------------------------------------------
+# Theme parameters
+# All of these are available in templates as site.Params.<key>.
+# Provide sensible defaults here; users override in their site's hugo.toml.
+# ---------------------------------------------------------------------------
+[params]
+  # --- Identity ---
+  # author_name is used in two places:
+  #   1. author_list.html bolds your name in author lists
+  #   2. JSON-LD Person schema (later)
+  author_name  = "Alice Smith"
+  author_title = "Research Scientist"
+  author_bio   = "I work on things."
+  author_email = "alice@example.com"
+
+  # --- Homepage section limits ---
+  # How many items to show in each homepage hero section before "see all".
+  home_publications_count = 3
+  home_patents_count      = 3
+  home_posts_count        = 4
+  home_experience_count   = 4
+
+  # --- Integrations (leave blank to disable) ---
+  google_analytics = ""   # e.g. "G-XXXXXXXXXX"
+  disqus_shortname = ""   # e.g. "mysite"
+
+  primary_rgb = "55, 138, 221"   # matches pub_colors.conference
+
+  # --- Publication type accent colours ---
+  # These feed into CSS custom properties via Hugo Pipes (see assets/css/main.css).
+  # You can override any or all of these in your site's hugo.toml.
+  # Values are any valid CSS colour: hex, rgb(), hsl(), etc.
+  [params.pub_colors]
+    conference   = "#378ADD"
+    journal      = "#1D9E75"
+    preprint     = "#EF9F27"
+    thesis       = "#7F77DD"
+    book         = "#D85A30"
+    bookchapter  = "#D85A30"   # same family as book
+    other        = "#888780"
+
+  # --- Dark mode ---
+  # "auto"  = respect the OS prefers-color-scheme setting
+  # "light" = always light
+  # "dark"  = always dark
+  dark_mode = "auto"

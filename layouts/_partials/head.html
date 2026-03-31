@@ -1,5 +1,181 @@
+{{/*
+  head.html — everything inside <head>.
+
+  Load order matters here:
+    1. Meta / charset (must be first)
+    2. Title
+    3. Bootstrap CSS  (defines --bs-* custom properties)
+    4. Our CSS        (minified/fingerprinted; can reference --bs-* variables)
+    5. Colour overrides <style> block  (overrides both --bs-* and --pub-*)
+    6. Dark mode initialisation <script>  (must run before first paint to
+       avoid a flash of the wrong theme — inline, not deferred)
+    7. Everything else (canonical, open graph, etc.)
+
+  Bootstrap JS is loaded at the END of <body> in baseof.html, not here,
+  because it doesn't block rendering and components like the BibTeX modal
+  need the DOM to be ready.
+*/}}
+
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ if .IsHome }}{{ site.Title }}{{ else }}{{ printf "%s | %s" .Title site.Title }}{{ end }}</title>
-{{ partialCached "head/css.html" . }}
-{{ partialCached "head/js.html" . }}
+
+{{/* --- Page title ---
+     "Page title | Site title" for inner pages, just "Site title" for home.
+*/}}
+<title>
+  {{- if .IsHome }}{{ site.Title }}
+  {{- else }}{{ .Title }} | {{ site.Title }}
+  {{- end -}}
+</title>
+
+{{/* --- Canonical URL ---
+     Tells search engines the authoritative URL for this page.
+     Prevents duplicate-content penalties if the site is mirrored.
+*/}}
+<link rel="canonical" href="{{ .Permalink }}">
+
+{{/* --- Meta description ---
+     Uses the page's explicit description param, falls back to .Summary
+     (Hugo's auto-generated first ~70 words), falls back to site description.
+*/}}
+<meta name="description" content="{{
+  with .Params.description }}{{ . }}{{
+  else }}{{ with .Summary }}{{ . | plainify | truncate 160 }}{{
+  else }}{{ with site.Params.description }}{{ . }}{{
+  end }}{{ end }}{{ end }}">
+
+{{/* --- Open Graph tags ---
+     Used by social-media link previews (Twitter/X, LinkedIn, Slack, etc.).
+     og:type is "article" for content pages, "website" for the homepage.
+*/}}
+<meta property="og:title"       content="{{ .Title }}">
+<meta property="og:url"         content="{{ .Permalink }}">
+<meta property="og:site_name"   content="{{ site.Title }}">
+<meta property="og:type"        content="{{ if .IsHome }}website{{ else }}article{{ end }}">
+<meta property="og:description" content="{{
+  with .Params.description }}{{ . }}{{
+  else }}{{ with .Summary }}{{ . | plainify | truncate 160 }}{{
+  end }}{{ end }}">
+
+{{/* --- Favicon --- */}}
+<link rel="icon" href="{{ "favicon.ico" | relURL }}">
+
+{{/* -----------------------------------------------------------------------
+  1. Bootstrap CSS — defines all --bs-* custom properties.
+     We pin to a specific version + integrity hash. When you upgrade Bootstrap,
+     get the new hash from https://www.jsdelivr.com/package/npm/bootstrap
+     (click the file → SRI hash).
+----------------------------------------------------------------------- */}}
+<link rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB"
+      crossorigin="anonymous">
+
+{{/* -----------------------------------------------------------------------
+  2. Our CSS — built and minified by Hugo Pipes (css.Build).
+     In development: unminified, with a source map for browser devtools.
+     In production:  minified + fingerprinted (integrity hash in the URL,
+                     so browsers re-fetch when the file changes).
+     css.Build handles both plain CSS and SCSS. Since we're using plain CSS
+     it just minifies; we don't need Hugo Extended.
+----------------------------------------------------------------------- */}}
+{{- with resources.Get "css/main.css" }}
+  {{- $opts := dict
+    "minify"    (not hugo.IsDevelopment)
+    "sourceMap" (cond hugo.IsDevelopment "linked" "none")
+  }}
+  {{- with . | css.Build $opts }}
+    {{- if hugo.IsDevelopment }}
+      <link rel="stylesheet" href="{{ .RelPermalink }}">
+    {{- else }}
+      {{- with . | fingerprint }}
+        <link rel="stylesheet"
+              href="{{ .RelPermalink }}"
+              integrity="{{ .Data.Integrity }}"
+              crossorigin="anonymous">
+      {{- end }}
+    {{- end }}
+  {{- end }}
+{{- end }}
+
+{{/* -----------------------------------------------------------------------
+  3. Colour overrides — a small inline <style> block that sets CSS custom
+     properties from hugo.toml params.
+     
+     Why inline rather than in main.css?
+       main.css is a static asset processed at build time without access to
+       site config (css.Build doesn't run Go templates). An inline <style>
+       block IS a Go template, so we can read site.Params here.
+
+     Why after Bootstrap and our CSS?
+       CSS custom properties are resolved at paint time using the cascade.
+       This block comes later in the <head>, so its :root declarations win
+       over the defaults in Bootstrap and main.css.
+
+     Bootstrap colour integration:
+       Bootstrap 5.3 exposes its palette as --bs-* properties. We override
+       --bs-primary (and its rgb triplet for rgba() usage) so Bootstrap's
+       own components (buttons, links, focus rings) use your chosen colour.
+       The rgb triplet is set via params.primary_rgb (e.g. "55, 138, 221") so
+       Bootstrap's rgba() hover/focus variants work correctly.
+----------------------------------------------------------------------- */}}
+<style>
+  :root {
+    /* Bootstrap primary colour — affects buttons, links, focus rings.
+       Set params.primary_rgb in hugo.toml to match your primary colour.
+       Example: primary_rgb = "55, 138, 221" for #378ADD */
+    {{ with site.Params.primary_rgb }}
+    --bs-primary:     {{ site.Params.pub_colors.conference | default "#378ADD" }};
+    --bs-primary-rgb: {{ . }};
+    {{ end }}
+
+    /* Publication type accent colours */
+    --pub-color-conference:  {{ site.Params.pub_colors.conference  | default "#378ADD" }};
+    --pub-color-journal:     {{ site.Params.pub_colors.journal     | default "#1D9E75" }};
+    --pub-color-preprint:    {{ site.Params.pub_colors.preprint    | default "#EF9F27" }};
+    --pub-color-thesis:      {{ site.Params.pub_colors.thesis      | default "#7F77DD" }};
+    --pub-color-book:        {{ site.Params.pub_colors.book        | default "#D85A30" }};
+    --pub-color-bookchapter: {{ site.Params.pub_colors.bookchapter | default "#D85A30" }};
+    --pub-color-other:       {{ site.Params.pub_colors.other       | default "#888780" }};
+  }
+</style>
+
+{{/* -----------------------------------------------------------------------
+  4. Dark mode initialisation — inline script, runs synchronously before
+     the browser paints anything.
+
+     Why inline and synchronous?
+       If we used a deferred or external script, the browser would paint the
+       page in the wrong theme first, then flash to the correct one. That's
+       called FOIT (flash of incorrect theme). Running inline prevents it.
+
+     How it works:
+       - Reads the user's saved preference from localStorage (set by the
+         toggle button in the navbar)
+       - Falls back to the hugo.toml default (params.dark_mode)
+       - Falls back to the OS prefers-color-scheme media query
+       - Sets data-bs-theme on <html> immediately
+
+     Bootstrap 5.3 uses data-bs-theme="dark" / "light" on any element to
+     switch colour schemes for that element and its descendants. Setting it
+     on <html> applies it globally.
+----------------------------------------------------------------------- */}}
+<script>
+  (function () {
+    var saved    = localStorage.getItem('theme');
+    var sitePref = {{ site.Params.dark_mode | default "auto" | jsonify }};
+    var theme;
+
+    if (saved === 'dark' || saved === 'light') {
+      theme = saved;
+    } else if (sitePref === 'dark' || sitePref === 'light') {
+      theme = sitePref;
+    } else {
+      // "auto" — respect OS preference
+      theme = window.matchMedia('(prefers-color-scheme: dark)').matches
+        ? 'dark' : 'light';
+    }
+
+    document.documentElement.setAttribute('data-bs-theme', theme);
+  })();
+</script>

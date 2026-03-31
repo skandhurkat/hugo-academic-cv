@@ -1,7 +1,61 @@
 {{ define "main" }}
-  <h1>{{ .Title }}</h1>
-  {{ .Content }}
-  {{ range .Pages }}
-    <h2><a href="{{ .RelPermalink }}">{{ .LinkTitle }}</a></h2>
-  {{ end }}
+
+{{/*
+  term.html — a single taxonomy term page, e.g. /publication_types/conference/
+  Lists all pages tagged with this term.
+
+  Hugo's template lookup:
+    /publication_types/            → taxonomy.html  (term index)
+    /publication_types/conference/ → term.html      (you are here)
+*/}}
+
+<div class="container py-4">
+  <div class="row mb-3">
+    <div class="col">
+      {{ with .Parent }}
+        <nav aria-label="breadcrumb">
+          <ol class="breadcrumb">
+            <li class="breadcrumb-item">
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+            </li>
+            <li class="breadcrumb-item active" aria-current="page">
+              {{ $.Title }}
+            </li>
+          </ol>
+        </nav>
+      {{ end }}
+
+      <h1 class="mb-3">{{ .Title }}</h1>
+
+      {{ if eq .Data.Singular "publication_type" }}
+        <a href="{{ "/publications/" | relURL }}"
+           class="btn btn-sm btn-outline-secondary mb-3">
+          ← All publications
+        </a>
+      {{ end }}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-9">
+      {{ if eq .Data.Singular "publication_type" }}
+        {{ range .Pages }}
+          {{ partial "publications/pub_card.html" . }}
+        {{ end }}
+      {{ else }}
+        <ul class="list-unstyled">
+          {{ range .Pages }}
+            <li class="mb-2">
+              <a href="{{ .RelPermalink }}">{{ .Title }}</a>
+              <span class="text-muted ms-2" style="font-size:0.85rem;">
+                {{ .Date.Format "January 2006" }}
+              </span>
+            </li>
+          {{ end }}
+        </ul>
+      {{ end }}
+    </div>
+  </div>
+</div>
+
 {{ end }}

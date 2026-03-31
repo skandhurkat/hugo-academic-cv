@@ -1,16 +1,53 @@
-{{ $page := .page }}
-{{ $authors := $page.Params.authors }}
-{{ $max_authors := -1 }}
+{{/*
+  Renders a formatted author list for a publication.
+
+  Usage:
+    {{ partial "author_list.html" (dict "page" . "max_authors" 5) }}
+
+  Parameters:
+    page        — the publication page (required)
+    max_authors — truncate after this many authors and append "et al."
+                  omit or pass -1 to show all authors
+
+  The author matching params.author_name will be wrapped in <strong>.
+
+  Note on et al. punctuation:
+    We build the truncated list with delimit, then append "et al." as a
+    plain string outside the delimit call. This gives us:
+      "Alice, Bob, et al."
+    rather than the incorrect:
+      "Alice, Bob, et al"  (missing period)
+    or:
+      "Alice, Bob, and et al."  (delimit's "and" before last element)
+*/}}
+
+{{ $authors    := .page.Params.authors | default slice }}
+{{ $selfName   := site.Params.author_name }}
+{{ $maxAuthors := -1 }}
 {{ with .max_authors }}
-    {{ $max_authors = . }}
+  {{ $maxAuthors = . }}
 {{ end }}
-{{ $author_string := "" }}
-{{ $len_authors := ($authors | len) }}
 
-{{ if or (lt $max_authors 0) (ge $max_authors $len_authors)}}
-    {{ $author_string = (delimit $authors ", " " and ")}}
+{{/* Decide whether to truncate */}}
+{{ $truncate   := and (gt $maxAuthors 0) (gt (len $authors) $maxAuthors) }}
+{{ $displayList := $authors }}
+{{ if $truncate }}
+  {{ $displayList = $authors | first $maxAuthors }}
+{{ end }}
+
+{{/* Render each author, bolding the self-author */}}
+{{ $rendered := slice }}
+{{ range $displayList }}
+  {{ if and $selfName (eq . $selfName) }}
+    {{ $rendered = $rendered | append (printf "<strong class=\"pub-self-author\">%s</strong>" .) }}
+  {{ else }}
+    {{ $rendered = $rendered | append . }}
+  {{ end }}
+{{ end }}
+
+{{/* Join with commas. Use "and" before the last name only when showing all. */}}
+{{ if $truncate }}
+  {{- delimit $rendered ", " | safeHTML }}, et al.
 {{ else }}
-    {{ $author_string = (delimit ($authors | first $max_authors | append "et al") ", ") -}}
+  {{- delimit $rendered ", " " and " | safeHTML -}}
 {{ end }}
-
-{{- $author_string -}}

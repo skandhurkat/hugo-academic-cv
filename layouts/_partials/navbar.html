@@ -1,75 +1,157 @@
-{{- $page:= .page }}
-{{- $menuID:= .menuID }}
+{{/*
+  navbar.html — Bootstrap 5.3 navbar with dark mode toggle and search.
 
-{{- with index site.Menus $menuID }}
-<nav class="navbar navbar-expand-lg bg-body-tertiary">
-    <div class="container-md">
-        <a class="navbar-brand" href="/">{{site.Title}}</a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
+  Called from header.html (or baseof.html) with the page as context:
+    {{ partial "navbar.html" . }}
+
+  Scrollspy note:
+    This navbar has id="main-navbar" so Bootstrap scrollspy can target it.
+    Scrollspy is activated on <body> in baseof.html via:
+      data-bs-spy="scroll" data-bs-target="#main-navbar"
+    When the user scrolls, Bootstrap adds the "active" class to whichever
+    nav link's href matches the currently visible section id.
+
+  Menu entries:
+    Defined in hugo.toml under [menus.main]. Each entry has:
+      name    — display text
+      url     — either an anchor ("#experience") for homepage sections,
+                or a path ("/publications/") for standalone pages
+      weight  — sort order
+
+  Active state:
+    For full-page links (not anchors), we check .IsMenuCurrent and
+    .HasMenuCurrent to add the Bootstrap "active" class. Anchor links
+    get their active state from scrollspy at runtime, not from Hugo.
+*/}}
+
+<nav id="main-navbar"
+     class="navbar navbar-expand-lg bg-body-tertiary sticky-top"
+     aria-label="Main navigation">
+  <div class="container-md">
+
+    {{/* Site title / brand — links to homepage */}}
+    <a class="navbar-brand fw-semibold" href="{{ "/" | relURL }}">
+      {{- site.Title -}}
+    </a>
+
+    {{/* Hamburger toggle for mobile — collapses/expands the nav links */}}
+    <button class="navbar-toggler"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#navbar-links"
+            aria-controls="navbar-links"
+            aria-expanded="false"
+            aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div class="collapse navbar-collapse" id="navbar-links">
+
+      {{/* Nav links — built from site.Menus.main */}}
+      <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+        {{ range site.Menus.main }}
+          {{/*
+            Determine active state.
+            Anchor links (href="#...") are handled by scrollspy at runtime,
+            so we only apply Hugo's active class to real page links.
+            hasPrefix "#" catches anchor-only entries.
+          */}}
+          {{ $isAnchor := hasPrefix .URL "#" }}
+          {{ $isActive := false }}
+          {{ if not $isAnchor }}
+            {{ $isActive = or ($.IsMenuCurrent "main" .) ($.HasMenuCurrent "main" .) }}
+          {{ end }}
+
+          <li class="nav-item">
+            <a class="nav-link{{ if $isActive }} active{{ end }}"
+               {{ if $isActive }}aria-current="page"{{ end }}
+               href="{{ .URL }}">
+              {{- .Name -}}
+            </a>
+          </li>
+        {{ end }}
+      </ul>
+
+      {{/* ---------------------------------------------------------------
+        DuckDuckGo search form.
+        Submits to duckduckgo.com with a hidden "sites:" query that restricts
+        results to this domain. No server-side code, no index to build.
+        The q field contains the user's query; the hidden fields tell DDG
+        to restrict to this site.
+      --------------------------------------------------------------- */}}
+      <form class="d-flex me-2"
+            role="search"
+            action="https://duckduckgo.com/"
+            method="get"
+            target="_blank">
+        {{/* Restrict search to this domain */}}
+        <input type="hidden" name="sites" value="{{ site.BaseURL | urlize }}">
+        <input class="form-control form-control-sm me-1"
+               type="search"
+               name="q"
+               placeholder="Search…"
+               aria-label="Search this site"
+               style="width: 10rem;">
+        <button class="btn btn-outline-secondary btn-sm" type="submit">
+          Search
         </button>
-        <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                {{- partial "inline/navbar/walk.html" (dict "page" $page "menuEntries" .) }}
-            </ul>
-        </div>
+      </form>
+
+      {{/* ---------------------------------------------------------------
+        Dark mode toggle button.
+        Reads the current theme from the <html data-bs-theme> attribute
+        (set on page load by the inline script in head.html), toggles it,
+        and saves the preference to localStorage so it persists across pages.
+
+        We use a single button whose icon and aria-label update via JS.
+        Unicode characters: ☀ = sun (light mode), ☾ = moon (dark mode).
+        Inline onclick keeps this self-contained with no external JS file.
+      --------------------------------------------------------------- */}}
+      <button id="theme-toggle"
+              class="btn btn-sm btn-outline-secondary ms-1"
+              type="button"
+              aria-label="Toggle dark mode"
+              onclick="
+                var html  = document.documentElement;
+                var current = html.getAttribute('data-bs-theme');
+                var next    = current === 'dark' ? 'light' : 'dark';
+                html.setAttribute('data-bs-theme', next);
+                localStorage.setItem('theme', next);
+                document.getElementById('theme-toggle-icon').textContent =
+                  next === 'dark' ? '☀' : '☾';
+              ">
+        <span id="theme-toggle-icon"
+              aria-hidden="true"
+              style="font-size: 0.9rem;">
+          {{/*
+            Initial icon is set by Hugo based on the site default.
+            The inline script in head.html has already set data-bs-theme
+            by the time this renders, but since this is server-rendered HTML
+            we use the site config default as the initial value.
+            JS will correct it immediately if the user has a saved preference.
+          */}}
+          {{ if eq (site.Params.dark_mode | default "auto") "dark" }}☀{{ else }}☾{{ end }}
+        </span>
+      </button>
+
     </div>
+  </div>
 </nav>
-{{- end }}
 
-{{- define "_partials/inline/navbar/walk.html" }}
-    {{- $page := .page }}
-    {{- range .menuEntries }}
-        {{- $li_attrs := (dict "class" (slice "nav-item")) }}
-        {{- $a_attrs := (dict "class" (slice "nav-link") "href" .URL) }}
-        {{- $hasChildren := false }}
-        {{- with .Children }}
-            {{- $li_attrs = merge $li_attrs (dict "class" ($li_attrs.class | append "dropdown")) }}
-            {{- $a_attrs = merge $a_attrs (dict "class" ($a_attrs.class | append "dropdown-toggle")) }}
-            {{- $a_attrs = merge $a_attrs (dict "data-bs-toggle" "dropdown" "aria-expanded" "false") }}
-            {{- $hasChildren = true }}
-        {{- end }}
-
-        {{- if $page.IsMenuCurrent .Menu . }}
-          {{- $a_attrs = merge $a_attrs (dict "class" ($a_attrs.class | append "active")) }}
-          {{- $a_attrs = merge $a_attrs (dict "aria-current" "page") }}
-        {{- else if $page.HasMenuCurrent .Menu .}}
-          {{- $a_attrs = merge $a_attrs (dict "class" ($a_attrs.class | append "active")) }}
-          {{- $a_attrs = merge $a_attrs (dict "aria-current" "true") }}
-        {{- end }}
-        {{- $name := .Name }}
-        {{- with .Identifier }}
-          {{- with T . }}
-            {{- $name = . }}
-          {{- end }}
-        {{- end }}
-        <li
-          {{- range $k, $v := $li_attrs }}
-            {{- with $v }}
-              {{- if eq $k "class" }}
-                {{- printf " %s=\"%s\"" $k (delimit $v " ") | safeHTMLAttr }}
-              {{- else }}
-                {{- printf " %s=\"%s\"" $k $v | safeHTMLAttr }}
-              {{- end }}
-            {{- end }}
-          {{- end -}}
-        >
-          <a
-            {{- range $k, $v := $a_attrs }}
-              {{- with $v }}
-                {{- if eq $k "class" }}
-                  {{- printf " %s=\"%s\"" $k (delimit $v " ") | safeHTMLAttr }}
-                {{- else }}
-                  {{- printf " %s=\"%s\"" $k $v | safeHTMLAttr }}
-                {{- end }}
-              {{- end }}
-            {{- end -}}
-          >{{ $name }}</a>
-          {{- if $hasChildren }}
-            <ul class="dropdown-menu">
-              {{- partial "inline/navbar/walk.html" (dict "page" $page "menuEntries" .Children) }}
-            </ul>
-          {{- end }}
-        </li>
-    {{- end }}
-{{- end }}
+{{/*
+  Fix initial icon mismatch.
+  The icon above is based on site.Params.dark_mode, but the actual theme
+  applied by head.html may differ (e.g. user has a saved preference, or
+  "auto" resolved to dark via prefers-color-scheme). This tiny script corrects
+  the icon after the DOM is ready. It runs after the navbar HTML streams in,
+  so there's no flash — the correction happens before the user can see it.
+*/}}
+<script>
+  (function () {
+    var theme = document.documentElement.getAttribute('data-bs-theme');
+    var icon  = document.getElementById('theme-toggle-icon');
+    if (icon) {
+      icon.textContent = theme === 'dark' ? '☀' : '☾';
+    }
+  })();
+</script>

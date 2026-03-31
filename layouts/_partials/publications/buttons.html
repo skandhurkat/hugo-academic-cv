@@ -1,27 +1,67 @@
+{{/*
+  Renders the action buttons for a publication: PDF, ArXiv, DOI, BibTeX.
+
+  Usage:
+    {{ partial "publications/buttons.html" . }}
+    (pass the publication page as context)
+
+  PDF resolution order:
+    1. Full URL (http/https/protocol-relative) — used as-is
+    2. Root-relative path (/papers/foo.pdf) — passed through relURL
+    3. Page bundle resource (filename only) — resolved via .Resources.GetMatch
+       This supports page bundles: put the PDF next to the index.md and
+       reference it by filename in front matter.
+*/}}
+
 {{ $page := . }}
-<div class="row mb-2 pb-2">
-    <div class="col">
-    {{- with $page.Params.pdf }}
+
+<div class="d-flex flex-wrap gap-1 mt-2">
+
+  {{- with $page.Params.pdf }}
     {{ $url := . }}
     {{ $finalURL := "" }}
     {{ if or (hasPrefix $url "http://") (hasPrefix $url "https://") (hasPrefix $url "//") }}
-        {{ $finalURL = $url | urls.AbsURL }}
+      {{ $finalURL = $url }}
     {{ else if hasPrefix $url "/" }}
-        {{ $finalURL = $url | relURL }}
+      {{ $finalURL = $url | relURL }}
     {{ else }}
-        {{ with $page.Resources.GetMatch $url }}
-            {{ $finalURL = .RelPermalink }}
-        {{ else }}
-            {{ errorf "Failed to find page resource %q" $url }}
-        {{ end }}
+      {{ with $page.Resources.GetMatch $url }}
+        {{ $finalURL = .RelPermalink }}
+      {{ else }}
+        {{/* Warn at build time rather than silently producing a broken button */}}
+        {{ warnf "publications/buttons.html: could not find PDF resource %q in page %s" $url $page.RelPermalink }}
+      {{ end }}
     {{ end }}
-        <button class="btn btn-outline-primary"><a href="{{ $finalURL }}">PDF</a></button>
+    {{ with $finalURL }}
+      <a href="{{ . }}" class="btn btn-outline-primary btn-sm" target="_blank" rel="noopener">
+        PDF
+      </a>
     {{ end }}
-    {{- with $page.Params.arxiv }}
-        <button class="btn btn-outline-primary"><a href="//arxiv.org/abs/{{ . }}">ArXiV</a></button>
-    {{ end }}
-    {{- with $page.Params.doi }}
-        <button class="btn btn-outline-primary"><a href="//doi.org/{{ . }}">DOI</a></button>
-    {{ end }}
-    </div>
+  {{- end }}
+
+  {{- with $page.Params.arxiv }}
+    <a href="https://arxiv.org/abs/{{ . }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+      arXiv
+    </a>
+  {{- end }}
+
+  {{- with $page.Params.doi }}
+    <a href="https://doi.org/{{ . }}" class="btn btn-outline-secondary btn-sm" target="_blank" rel="noopener">
+      DOI
+    </a>
+  {{- end }}
+
+  {{/*
+    BibTeX button — triggers a Bootstrap modal defined in bibtex_modal.html.
+    The modal is included once in the page by pub_card.html or single.html;
+    the button here just references it by ID.
+    data-bibtex is written by bibtex_modal.html, not here.
+  */}}
+  <button type="button"
+          class="btn btn-outline-secondary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#bibtex-modal-{{ $page.File.UniqueID }}">
+    BibTeX
+  </button>
+
 </div>

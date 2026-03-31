@@ -1,0 +1,113 @@
+{{/*
+  Renders a single publication as a card with a left accent border.
+
+  Usage:
+    {{ partial "publications/pub_card.html" . }}
+    (pass the publication page as context)
+
+  Includes the BibTeX modal markup (one modal per card, identified by
+  .File.UniqueID to avoid ID collisions on list pages).
+*/}}
+
+{{ $page := . }}
+
+{{/*
+  Determine the "primary" publication type for accent colour.
+  We use a priority order so a paper that is both 'conference' and 'preprint'
+  shows the conference colour. The first match in the priority list wins.
+
+  index $priorityMap $type returns the priority integer (lower = higher priority).
+  We iterate all types and keep the one with the lowest priority number.
+*/}}
+{{ $priorityMap := dict
+    "journal"     0
+    "conference"  1
+    "book"        2
+    "bookchapter" 3
+    "thesis"      4
+    "preprint"    5
+    "other"       6
+}}
+
+{{ $primaryType  := "other" }}
+{{ $bestPriority := 99 }}
+{{ range $page.Params.publication_types }}
+  {{ $p := index $priorityMap . | default 99 }}
+  {{ if lt $p $bestPriority }}
+    {{ $bestPriority = $p }}
+    {{ $primaryType  = . }}
+  {{ end }}
+{{ end }}
+
+{{/*
+  Map the primary type to its CSS custom property name.
+  index is required for dynamic key lookup — $map.$key is not valid Hugo syntax.
+*/}}
+{{ $cssVarMap := dict
+    "conference"  "--pub-color-conference"
+    "journal"     "--pub-color-journal"
+    "preprint"    "--pub-color-preprint"
+    "thesis"      "--pub-color-thesis"
+    "book"        "--pub-color-book"
+    "bookchapter" "--pub-color-bookchapter"
+    "other"       "--pub-color-other"
+}}
+{{ $cssVar := index $cssVarMap $primaryType | default "--pub-color-other" }}
+
+{{/*
+  Format the date according to date_precision (default: month).
+  Go's reference time: 2006=year, 01=month, 02=day.
+*/}}
+{{ $prec := $page.Params.date_precision | default "month" }}
+{{ $year := "" }}
+{{ if eq $prec "year"  }}{{ $year = $page.Date.Format "2006" }}
+{{ else if eq $prec "day" }}{{ $year = $page.Date.Format "January 2, 2006" }}
+{{ else }}{{ $year = $page.Date.Format "January 2006" }}{{ end }}
+
+<div class="card pub-card mb-3" style="border-left: 3px solid var({{ $cssVar }});">
+  <div class="card-body">
+
+    {{/* --- Type badges + venue + year on one line --- */}}
+    <div class="d-flex flex-wrap align-items-baseline gap-1 mb-1">
+      {{ range $page.Params.publication_types }}
+        <span class="pub-type-badge"
+              style="background-color: var({{ index $cssVarMap . | default "--pub-color-other" }}22);
+                     color: var({{ index $cssVarMap . | default "--pub-color-other" }});">
+          {{ . }}
+        </span>
+      {{ end }}
+      {{ with $page.Params.venue }}
+        <span class="text-muted" style="font-size: 0.85rem;">{{ . }}</span>
+      {{ end }}
+      {{ with $year }}
+        <span class="text-muted" style="font-size: 0.85rem;">· {{ . }}</span>
+      {{ end }}
+    </div>
+
+    {{/* --- Title links to the single publication page --- */}}
+    <h3 class="card-title h6 mb-1">
+      <a href="{{ $page.RelPermalink }}" class="text-decoration-none stretched-link-title">
+        {{ $page.Title }}
+      </a>
+    </h3>
+
+    {{/* --- Author list (max 6 before et al.) --- */}}
+    <p class="card-text text-muted mb-2" style="font-size: 0.875rem;">
+      {{ partial "author_list.html" (dict "page" $page "max_authors" 6) }}.
+    </p>
+
+    {{/* --- Truncated abstract --- */}}
+    {{ with $page.Params.abstract }}
+      <p class="card-text pub-abstract mb-2" style="font-size: 0.875rem;">
+        {{ . | markdownify }}
+      </p>
+    {{ end }}
+
+    {{/* --- Action buttons (PDF, arXiv, DOI, BibTeX) --- */}}
+    {{ partial "publications/buttons.html" $page }}
+
+  </div>
+</div>
+
+{{/* --- BibTeX modal (hidden until triggered by the BibTeX button) --- */}}
+{{ partial "publications/bibtex_modal.html" $page }}
