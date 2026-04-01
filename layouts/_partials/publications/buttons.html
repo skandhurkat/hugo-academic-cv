@@ -51,6 +51,52 @@
     </a>
   {{- end }}
 
+  {{/* --- Derive BibTeX entry type from publication_types --- */}}
+  {{ $pubtype := "misc" }}
+  {{ with $page.Params.publication_types }}
+    {{ $first := index . 0 }}
+    {{ if eq $first "conference"  }}{{ $pubtype = "inproceedings" }}
+    {{ else if eq $first "journal"     }}{{ $pubtype = "article" }}
+    {{ else if eq $first "preprint"    }}{{ $pubtype = "misc" }}
+    {{ else if eq $first "thesis"      }}{{ $pubtype = "phdthesis" }}
+    {{ else if eq $first "book"        }}{{ $pubtype = "book" }}
+    {{ else if eq $first "bookchapter" }}{{ $pubtype = "incollection" }}
+    {{ end }}
+  {{ end }}
+
+  {{/* --- Build cite key: FirstAuthorLastname + Year --- */}}
+  {{ $year := $page.Date.Format "2006" }}
+
+  {{ $citekey := "Unknown" }}
+  {{ with $page.Params.authors }}
+    {{ $firstAuthor := index . 0 }}
+    {{/* Take the last word of the first author's name as the last name */}}
+    {{ $parts    := split $firstAuthor " " }}
+    {{ $lastname := index $parts (sub (len $parts) 1) }}
+    {{ $citekey   = printf "%s%s" $lastname $year }}
+  {{ end }}
+
+  {{/* --- Assemble author string (BibTeX uses " and " as separator) --- */}}
+  {{ $authorStr := "" }}
+  {{ with $page.Params.authors }}
+    {{ $authorStr = delimit . " and " }}
+  {{ end }}
+  
+  {{/* --- Build the BibTeX entry as a string --- */}}
+  {{ $bib := printf "@%s{%s,\n" $pubtype $citekey }}
+  {{ $bib  = printf "%s  author    = {%s},\n" $bib $authorStr }}
+  {{ $bib  = printf "%s  title     = {%s},\n" $bib $page.Title }}
+  {{ $bib  = printf "%s  year      = {%s},\n" $bib $year }}
+  {{ with $page.Params.venue     }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.booktitle }}{{ $bib = printf "%s  booktitle = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.publisher }}{{ $bib = printf "%s  publisher = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.volume    }}{{ $bib = printf "%s  volume    = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.number    }}{{ $bib = printf "%s  number    = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.pages     }}{{ $bib = printf "%s  pages     = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.doi       }}{{ $bib = printf "%s  doi       = {%s},\n" $bib . }}{{ end }}
+  {{ with $page.Params.arxiv     }}{{ $bib = printf "%s  eprint    = {%s},\n" $bib . }}{{ end }}
+  {{ $bib  = printf "%s}" $bib }}
+
   {{/*
     BibTeX button — triggers a Bootstrap modal defined in bibtex_modal.html.
     The modal is included once in the page by pub_card.html or single.html;
@@ -60,7 +106,8 @@
   <button type="button"
           class="btn btn-outline-secondary btn-sm"
           data-bs-toggle="modal"
-          data-bs-target="#bibtex-modal-{{ $page.File.UniqueID }}">
+          data-bs-target="#bibtex-modal"
+          data-bibtex="{{ $bib | htmlEscape }}">
     BibTeX
   </button>
 

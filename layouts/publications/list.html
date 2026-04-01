@@ -141,4 +141,8 @@
     empty.style.display = visible === 0 ? '' : 'none';
   }
 </script>
+
+{{/* --- BibTeX modal (hidden until triggered by the BibTeX button) --- */}}
+{{ partial "bibtex_modal.html" . }}
+
 {{ end }}

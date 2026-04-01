@@ -47,7 +47,7 @@
 
 {{/* Join with commas. Use "and" before the last name only when showing all. */}}
 {{ if $truncate }}
-  {{- delimit $rendered ", " | safeHTML }}, et al.
+  {{- delimit $rendered ", " | safeHTML -}}, et al.
 {{ else }}
   {{- delimit $rendered ", " " and " | safeHTML -}}
-{{ end }}
+{{ end -}}
