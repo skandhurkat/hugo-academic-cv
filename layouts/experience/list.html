@@ -1,0 +1,58 @@
+{{ define "main" }}
+
+{{/*
+  Experience list page.
+
+  Sort order: current positions first (end_date = "present" or blank),
+  then past positions by end date descending, tiebroken by start date.
+
+  The trick: substitute time.Now for "present" end dates so Hugo's
+  native sort handles everything. We build a slice of dicts with a
+  computed sort_end field, sort by it, then range the result.
+
+  Hugo's `sort` on a slice of dicts:
+    {{ $sorted := sort $slice "sort_end" "desc" }}
+  where "sort_end" is the key name in each dict.
+*/}}
+
+{{/* --- Build sortable slice --- */}}
+{{ $entries := slice }}
+{{ range .Pages }}
+  {{ $endRaw    := .Params.end_date | default "" }}
+  {{ $isCurrent := or (eq $endRaw "") (eq $endRaw "present") }}
+
+  {{ $sortEnd := time.Now }}
+  {{ if not $isCurrent }}
+    {{ $padded := $endRaw }}
+    {{ if eq (len (findRE "-" $endRaw)) 0 }}{{ $padded = printf "%s-01-01" $endRaw }}
+    {{ else if eq (len (findRE "-" $endRaw)) 1 }}{{ $padded = printf "%s-01" $endRaw }}
+    {{ end }}
+    {{ $sortEnd = time $padded }}
+  {{ end }}
+
+  {{ $entries = $entries | append (dict "page" . "sort_end" $sortEnd) }}
+{{ end }}
+
+{{/* Sort by sort_end descending, then by page date descending for ties.
+     Hugo's sort is stable so we sort by the secondary key first. */}}
+{{ $entries = sort $entries "page.Date" "desc" }}
+{{ $entries = sort $entries "sort_end" "desc" }}
+
+<div class="container py-4">
+  <div class="row mb-3">
+    <div class="col">
+      <h1 class="mb-1">{{ .Title }}</h1>
+      {{ with .Content }}<div class="text-muted">{{ . }}</div>{{ end }}
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="col-lg-9">
+      {{ range $entries }}
+        {{ partial "experience/experience_card.html" .page }}
+      {{ end }}
+    </div>
+  </div>
+</div>
+
+{{ end }}

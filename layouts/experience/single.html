@@ -1,0 +1,15 @@
+{{ define "main" }}
+{{/*
+  Experience entries don't have dedicated single pages — the list page
+  is the canonical view. If someone navigates directly to an experience
+  URL, redirect them to the section list.
+
+  This uses an HTML meta refresh rather than a server-side redirect
+  since Hugo generates static files. Most browsers respect it instantly.
+*/}}
+<meta http-equiv="refresh" content="0; url={{ .Parent.RelPermalink }}">
+<p>
+  Redirecting to
+  <a href="{{ .Parent.RelPermalink }}">{{ .Parent.Title }}</a>…
+</p>
+{{ end }}

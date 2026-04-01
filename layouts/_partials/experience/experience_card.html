@@ -1,0 +1,112 @@
+{{/*
+  experience/experience_card.html — a single experience entry as a card.
+
+  "Present" highlighting: cards with end_date = "present" (or blank) get
+  a stronger left border and a "current" badge to visually distinguish them.
+
+  Logo: resolved the same way as PDF in publications — full URL, root-relative,
+  or page bundle resource.
+*/}}
+
+{{ $page := . }}
+
+{{/* --- Resolve end date for display --- */}}
+{{ $endRaw    := $page.Params.end_date | default "" }}
+{{ $isCurrent := or (eq $endRaw "") (eq $endRaw "present") }}
+{{ $prec      := $page.Params.date_precision | default "month" }}
+
+{{ $startDate := "" }}
+{{ if eq $prec "year"  }}{{ $startDate = $page.Date.Format "2006" }}
+{{ else if eq $prec "day" }}{{ $startDate = $page.Date.Format "Jan 2, 2006" }}
+{{ else }}{{ $startDate = $page.Date.Format "Jan 2006" }}
+{{ end }}
+
+{{ $endDisplay := "present" }}
+{{ if not $isCurrent }}
+  {{ $padded := $endRaw }}
+  {{ if eq (len (findRE "-" $endRaw)) 0 }}{{ $padded = printf "%s-01-01" $endRaw }}
+  {{ else if eq (len (findRE "-" $endRaw)) 1 }}{{ $padded = printf "%s-01" $endRaw }}
+  {{ end }}
+  {{ $parsed := time $padded }}
+  {{ if eq $prec "year"  }}{{ $endDisplay = $parsed.Format "2006" }}
+  {{ else if eq $prec "day" }}{{ $endDisplay = $parsed.Format "Jan 2, 2006" }}
+  {{ else }}{{ $endDisplay = $parsed.Format "Jan 2006" }}
+  {{ end }}
+{{ end }}
+
+{{/* --- Resolve logo URL --- */}}
+{{ $logoURL := "" }}
+{{ with $page.Params.logo }}
+  {{ if or (hasPrefix . "http://") (hasPrefix . "https://") }}
+    {{ $logoURL = . }}
+  {{ else if hasPrefix . "/" }}
+    {{ $logoURL = . | relURL }}
+  {{ else }}
+    {{ with $page.Resources.GetMatch . }}
+      {{ $logoURL = .RelPermalink }}
+    {{ end }}
+  {{ end }}
+{{ end }}
+
+{{/*
+  Visual distinction for current vs. past roles:
+    current → solid primary-coloured left border, light primary background tint
+    past    → muted grey left border, plain background
+*/}}
+{{ $borderStyle := "border-left: 3px solid var(--bs-secondary);" }}
+{{ $cardClass   := "" }}
+{{ if $isCurrent }}
+  {{ $borderStyle = "border-left: 3px solid var(--bs-primary);" }}
+  {{ $cardClass   = "border-primary-subtle" }}
+{{ end }}
+
+<div class="card mb-3 {{ $cardClass }}" style="{{ $borderStyle }}">
+  <div class="card-body">
+    <div class="d-flex gap-3">
+
+      {{/* --- Logo --- */}}
+      {{ with $logoURL }}
+        <div class="flex-shrink-0">
+          <img src="{{ . }}"
+               alt="{{ $page.Params.organization }} logo"
+               style="width: 3rem; height: 3rem; object-fit: contain;">
+        </div>
+      {{ end }}
+
+      <div class="flex-grow-1">
+
+        {{/* --- Title row: job title + current badge --- */}}
+        <div class="d-flex align-items-start justify-content-between gap-2">
+          <h3 class="h6 mb-0">{{ $page.Title }}</h3>
+          {{ if $isCurrent }}
+            <span class="badge text-bg-primary flex-shrink-0">current</span>
+          {{ end }}
+        </div>
+
+        {{/* --- Organisation + location --- */}}
+        <p class="text-muted mb-1" style="font-size: 0.875rem;">
+          {{ with $page.Params.organization }}<strong>{{ . }}</strong>{{ end }}
+          {{ with $page.Params.location }}
+            <span class="ms-2">{{ . }}</span>
+          {{ end }}
+        </p>
+
+        {{/* --- Date range --- */}}
+        <p class="text-muted mb-2" style="font-size: 0.825rem;">
+          {{ $startDate }} – {{ $endDisplay }}
+        </p>
+
+        {{/* --- Description --- */}}
+        {{ with $page.Params.description }}
+          <p class="mb-1" style="font-size: 0.875rem;">{{ . | markdownify }}</p>
+        {{ end }}
+
+        {{/* --- Markdown body (optional bullet points etc.) --- */}}
+        {{ with $page.Content }}
+          <div style="font-size: 0.875rem;">{{ . }}</div>
+        {{ end }}
+
+      </div>
+    </div>
+  </div>
+</div>
