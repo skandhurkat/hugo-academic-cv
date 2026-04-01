@@ -1,0 +1,164 @@
+{{ define "main" }}
+
+{{/*
+  Projects list page — JS filtering by category and status independently.
+
+  Two filter rows:
+    1. Category tabs (from the categories taxonomy)
+    2. Status tabs (active / completed / archived)
+
+  Each card gets data-categories (JSON array) and data-status (string).
+  filterProjects() ANDs the two active filters — so "active ML projects"
+  shows only cards matching both.
+
+  Hugo sorts pages by date descending by default (start date here),
+  which is what we want — most recently started projects first.
+*/}}
+
+<div class="container py-4">
+
+  <div class="row mb-3">
+    <div class="col">
+      <h1 class="mb-1">{{ .Title }}</h1>
+      {{ with .Content }}<div class="text-muted">{{ . }}</div>{{ end }}
+    </div>
+  </div>
+
+  {{/* --- Category filter ---
+       Collect all categories that actually appear in the content.
+  --- */}}
+  {{ $allCats := slice }}
+  {{ range .Pages }}
+    {{ range .Params.categories }}
+      {{ if not (in $allCats .) }}
+        {{ $allCats = $allCats | append . }}
+      {{ end }}
+    {{ end }}
+  {{ end }}
+  {{ $allCats = sort $allCats }}
+
+  {{ if $allCats }}
+  <div class="row mb-2">
+    <div class="col">
+      <div class="d-flex flex-wrap gap-1"
+           role="group"
+           aria-label="Filter projects by category">
+        <button class="btn btn-sm btn-primary"
+                data-cat-filter="all"
+                onclick="filterProjects(this)">
+          All categories
+        </button>
+        {{ range $allCats }}
+          <button class="btn btn-sm btn-outline-secondary"
+                  data-cat-filter="{{ . }}"
+                  onclick="filterProjects(this)">
+            {{ . }}
+          </button>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+
+  {{/* --- Status filter --- */}}
+  {{ $allStatuses := slice }}
+  {{ range .Pages }}
+    {{ $s := .Params.status | default "active" }}
+    {{ if not (in $allStatuses $s) }}
+      {{ $allStatuses = $allStatuses | append $s }}
+    {{ end }}
+  {{ end }}
+  {{ $allStatuses = sort $allStatuses }}
+
+  {{ if $allStatuses }}
+  <div class="row mb-3">
+    <div class="col">
+      <div class="d-flex flex-wrap gap-1"
+           role="group"
+           aria-label="Filter projects by status">
+        <button class="btn btn-sm btn-primary"
+                data-status-filter="all"
+                onclick="filterProjects(this)">
+          All statuses
+        </button>
+        {{ range $allStatuses }}
+          <button class="btn btn-sm btn-outline-secondary"
+                  data-status-filter="{{ . }}"
+                  onclick="filterProjects(this)">
+            {{ . }}
+          </button>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+
+  {{/* --- Project cards --- */}}
+  <div class="row">
+    <div class="col-lg-9" id="project-list">
+      {{ range .Pages }}
+        <div class="project-item"
+             data-categories="{{ .Params.categories | default slice | jsonify }}"
+             data-status="{{ .Params.status | default "active" }}">
+          {{ partial "projects/project_card.html" . }}
+        </div>
+      {{ end }}
+      <p id="project-empty" class="text-muted" style="display:none;">
+        No projects match the selected filters.
+      </p>
+    </div>
+  </div>
+
+</div>
+
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+  {{/*
+    filterProjects() reads the currently active category and status buttons
+    and shows only cards matching both. Clicking a button sets it active
+    then re-runs the filter — AND logic between the two dimensions.
+  */}}
+  function filterProjects(clickedBtn) {
+    // Toggle the clicked button's active state within its group
+    if (clickedBtn) {
+      var group = clickedBtn.closest('[role="group"]');
+      if (group) {
+        group.querySelectorAll('button').forEach(function(b) {
+          b.classList.remove('btn-primary');
+          b.classList.add('btn-outline-secondary');
+        });
+        clickedBtn.classList.remove('btn-outline-secondary');
+        clickedBtn.classList.add('btn-primary');
+      }
+    }
+
+    // Read active filters
+    var activeCat    = (document.querySelector('[data-cat-filter].btn-primary')
+                         || {getAttribute: function() { return 'all'; }})
+                       .getAttribute('data-cat-filter');
+    var activeStatus = (document.querySelector('[data-status-filter].btn-primary')
+                         || {getAttribute: function() { return 'all'; }})
+                       .getAttribute('data-status-filter');
+
+    var items   = document.querySelectorAll('.project-item');
+    var visible = 0;
+
+    items.forEach(function(item) {
+      var cats   = JSON.parse(item.getAttribute('data-categories') || '[]');
+      var status = item.getAttribute('data-status');
+
+      var catMatch    = activeCat    === 'all' || cats.indexOf(activeCat) !== -1;
+      var statusMatch = activeStatus === 'all' || status === activeStatus;
+
+      var show = catMatch && statusMatch;
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    document.getElementById('project-empty').style.display =
+      visible === 0 ? '' : 'none';
+  }
+</script>
+{{ end }}

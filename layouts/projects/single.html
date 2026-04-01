@@ -1,0 +1,84 @@
+{{ define "main" }}
+
+{{/*
+  Single project page — full detail with markdown body.
+
+  Reuses the same date range formatting logic as project_card.html.
+  Extracted here rather than a shared partial because the formatting is
+  a handful of lines and a partial would be more indirection than it's worth.
+*/}}
+
+{{ $prec      := .Params.date_precision | default "month" }}
+{{ $startDate := "" }}
+{{ if eq $prec "year"  }}{{ $startDate = .Date.Format "2006" }}
+{{ else if eq $prec "day" }}{{ $startDate = .Date.Format "January 2, 2006" }}
+{{ else }}{{ $startDate = .Date.Format "January 2006" }}
+{{ end }}
+
+{{ $endRaw  := .Params.end_date | default "" }}
+{{ $endDate := "present" }}
+{{ if and (ne $endRaw "") (ne $endRaw "present") }}
+  {{ $parsed := time $endRaw }}
+  {{ if eq $prec "year"  }}{{ $endDate = $parsed.Format "2006" }}
+  {{ else if eq $prec "day" }}{{ $endDate = $parsed.Format "January 2, 2006" }}
+  {{ else }}{{ $endDate = $parsed.Format "January 2006" }}
+  {{ end }}
+{{ end }}
+
+{{ $status := .Params.status | default "active" }}
+{{ $cls    := "text-bg-success" }}
+{{ if eq $status "completed" }}{{ $cls = "text-bg-primary" }}{{ end }}
+{{ if eq $status "archived"  }}{{ $cls = "text-bg-secondary" }}{{ end }}
+
+<div class="container py-4">
+  <div class="row">
+    <div class="col-lg-9">
+
+      {{/* Status + date range */}}
+      <div class="d-flex flex-wrap align-items-baseline gap-2 mb-2">
+        <span class="badge {{ $cls }}">{{ $status }}</span>
+        <span class="text-muted" style="font-size: 0.9rem;">
+          {{ $startDate }}{{ if ne $startDate "" }} – {{ end }}{{ $endDate }}
+        </span>
+      </div>
+
+      <h1 class="mb-2">{{ .Title }}</h1>
+
+      {{/* Categories linking to taxonomy pages */}}
+      {{ with .Params.categories }}
+        <div class="d-flex flex-wrap gap-1 mb-3">
+          {{ range . }}
+            {{ $termPage := site.GetPage (printf "/categories/%s" (. | urlize)) }}
+            {{ if $termPage }}
+              <a href="{{ $termPage.RelPermalink }}"
+                 class="badge text-bg-light text-decoration-none"
+                 style="font-weight: 500;">
+                {{ . }}
+              </a>
+            {{ else }}
+              <span class="badge text-bg-light">{{ . }}</span>
+            {{ end }}
+          {{ end }}
+        </div>
+      {{ end }}
+
+      {{/* Buttons */}}
+      {{ partial "projects/buttons.html" . }}
+
+      {{/* Abstract */}}
+      {{ with .Params.abstract }}
+        <h2 class="h5 mt-4 mb-2">About</h2>
+        <div>{{ . | markdownify }}</div>
+      {{ end }}
+
+      {{/* Markdown body */}}
+      {{ with .Content }}
+        <hr class="my-4">
+        <div>{{ . }}</div>
+      {{ end }}
+
+    </div>
+  </div>
+</div>
+
+{{ end }}

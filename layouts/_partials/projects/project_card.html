@@ -1,0 +1,97 @@
+{{/*
+  projects/project_card.html — a single project as a Bootstrap card.
+
+  Date range logic:
+    `date` is a real Hugo date (start date, used for sorting).
+    `end_date` is a raw string — either a date like "2025-03", the word
+    "present", or blank. We check for "present"/blank before attempting
+    to parse it as a date, so Hugo never chokes on the literal string.
+
+  Status colours mirror patents:
+    active    → success (green)
+    completed → primary (blue) — done and shipped, positive
+    archived  → secondary (grey) — no longer active
+*/}}
+
+{{ $page := . }}
+
+{{/* --- Format start date --- */}}
+{{ $prec      := $page.Params.date_precision | default "month" }}
+{{ $startDate := "" }}
+{{ if eq $prec "year"  }}{{ $startDate = $page.Date.Format "2006" }}
+{{ else if eq $prec "day" }}{{ $startDate = $page.Date.Format "Jan 2, 2006" }}
+{{ else }}{{ $startDate = $page.Date.Format "Jan 2006" }}
+{{ end }}
+
+{{/* --- Format end date ---
+     end_date is a raw string. We treat blank or "present" as ongoing.
+     For anything else we attempt to parse it as a date.
+     `time` will error on unparseable strings, so we guard with a
+     conditional rather than calling time unconditionally.
+--- */}}
+{{ $endRaw  := $page.Params.end_date | default "" }}
+{{ $endDate := "present" }}
+{{ if and (ne $endRaw "") (ne $endRaw "present") }}
+  {{/* Parse the date string — supports "2025", "2025-03", "2025-03-15" */}}
+  {{ $parsed := time $endRaw }}
+  {{ if eq $prec "year"  }}{{ $endDate = $parsed.Format "2006" }}
+  {{ else if eq $prec "day" }}{{ $endDate = $parsed.Format "Jan 2, 2006" }}
+  {{ else }}{{ $endDate = $parsed.Format "Jan 2006" }}
+  {{ end }}
+{{ end }}
+
+{{/* --- Status badge class --- */}}
+{{ $status  := $page.Params.status | default "active" }}
+{{ $cls     := "text-bg-success" }}
+{{ if eq $status "completed" }}{{ $cls = "text-bg-primary" }}{{ end }}
+{{ if eq $status "archived"  }}{{ $cls = "text-bg-secondary" }}{{ end }}
+
+<div class="card pub-card mb-3"
+     style="border-left: 3px solid var(--bs-primary);">
+  <div class="card-body">
+
+    {{/* Status + date range on one line */}}
+    <div class="d-flex flex-wrap align-items-baseline gap-1 mb-1">
+      <span class="pub-type-badge badge {{ $cls }}">{{ $status }}</span>
+      <span class="text-muted" style="font-size: 0.85rem;">
+        {{ $startDate }}{{ if ne $startDate "" }} – {{ end }}{{ $endDate }}
+      </span>
+    </div>
+
+    {{/* Title */}}
+    <h3 class="card-title h6 mb-1">
+      <a href="{{ $page.RelPermalink }}" class="text-decoration-none">
+        {{ $page.Title }}
+      </a>
+    </h3>
+
+    {{/* Categories as small badges */}}
+    {{ with $page.Params.categories }}
+      <div class="d-flex flex-wrap gap-1 mb-2">
+        {{ range . }}
+          {{ $termPage := site.GetPage (printf "/categories/%s" (. | urlize)) }}
+          {{ if $termPage }}
+            <a href="{{ $termPage.RelPermalink }}"
+               class="badge text-bg-light text-decoration-none"
+               style="font-size: 0.7rem; font-weight: 500;">
+              {{ . }}
+            </a>
+          {{ else }}
+            <span class="badge text-bg-light" style="font-size: 0.7rem;">{{ . }}</span>
+          {{ end }}
+        {{ end }}
+      </div>
+    {{ end }}
+
+    {{/* Abstract / description */}}
+    {{ with $page.Params.abstract }}
+      <p class="card-text pub-abstract mb-2" style="font-size: 0.875rem;">
+        {{ . | markdownify }}
+      </p>
+    {{ end }}
+
+    {{/* Buttons */}}
+    {{ partial "projects/buttons.html" $page }}
+
+  </div>
+</div>

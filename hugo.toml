@@ -11,6 +11,7 @@ title = 'My New Hugo Site'
 [taxonomies]
   tag              = 'tags'
   publication_type = 'publication_types'
+  category         = 'categories'
 
 # ---------------------------------------------------------------------------
 # Navigation menu

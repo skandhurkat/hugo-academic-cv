@@ -1,0 +1,52 @@
+{{/*
+  projects/buttons.html — links for a project card or single page.
+
+  Renders named buttons for github/demo/docs, then any entries in the
+  `links` list (arbitrary label+url pairs). All fields optional.
+*/}}
+
+{{ $page := . }}
+
+<div class="d-flex flex-wrap gap-1 mt-2">
+
+  {{ with $page.Params.github }}
+    <a href="{{ . }}"
+       class="btn btn-outline-secondary btn-sm"
+       target="_blank" rel="noopener">
+      GitHub
+    </a>
+  {{ end }}
+
+  {{ with $page.Params.demo }}
+    <a href="{{ . }}"
+       class="btn btn-outline-primary btn-sm"
+       target="_blank" rel="noopener">
+      Demo
+    </a>
+  {{ end }}
+
+  {{ with $page.Params.docs }}
+    <a href="{{ . }}"
+       class="btn btn-outline-secondary btn-sm"
+       target="_blank" rel="noopener">
+      Docs
+    </a>
+  {{ end }}
+
+  {{/*
+    Arbitrary links: [{label = "Paper", url = "https://..."}]
+    We capture both fields before entering `with` to avoid scoping loss.
+  */}}
+  {{ range $page.Params.links | default slice }}
+    {{ $label := .label | default "Link" }}
+    {{ $url   := .url }}
+    {{ with $url }}
+      <a href="{{ . }}"
+         class="btn btn-outline-secondary btn-sm"
+         target="_blank" rel="noopener">
+        {{ $label }}
+      </a>
+    {{ end }}
+  {{ end }}
+
+</div>
