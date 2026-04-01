@@ -1,0 +1,101 @@
+{{ define "main" }}
+
+{{/*
+  Patents list page — same JS filtering pattern as publications/list.html,
+  but filtered by `status` (granted/pending/abandoned) rather than type.
+*/}}
+
+<div class="container py-4">
+
+  <div class="row mb-3">
+    <div class="col">
+      <h1 class="mb-1">{{ .Title }}</h1>
+      {{ with .Content }}<div class="text-muted">{{ . }}</div>{{ end }}
+    </div>
+  </div>
+
+  {{/* --- Status filter buttons --- */}}
+  {{ $allStatuses := slice }}
+  {{ range .Pages }}
+    {{ $s := .Params.status | default "granted" }}
+    {{ if not (in $allStatuses $s) }}
+      {{ $allStatuses = $allStatuses | append $s }}
+    {{ end }}
+  {{ end }}
+  {{ $allStatuses = sort $allStatuses }}
+
+  {{ if $allStatuses }}
+  <div class="row mb-3">
+    <div class="col">
+      <div class="d-flex flex-wrap gap-1" role="group" aria-label="Filter patents by status">
+        <button class="btn btn-sm btn-primary"
+                data-filter="all"
+                onclick="filterPatents('all')">
+          All
+          <span class="badge text-bg-light ms-1">{{ len .Pages }}</span>
+        </button>
+        {{ range $allStatuses }}
+          {{ $status := . }}
+          {{ $count  := 0 }}
+          {{ range $.Pages }}
+            {{ if eq (.Params.status | default "granted") $status }}
+              {{ $count = add $count 1 }}
+            {{ end }}
+          {{ end }}
+          <button class="btn btn-sm btn-outline-secondary"
+                  data-filter="{{ $status }}"
+                  onclick="filterPatents('{{ $status }}')">
+            {{ $status }}
+            <span class="badge text-bg-secondary ms-1">{{ $count }}</span>
+          </button>
+        {{ end }}
+      </div>
+    </div>
+  </div>
+  {{ end }}
+
+  <div class="row">
+    <div class="col-lg-9" id="patent-list">
+      {{ range .Pages }}
+        <div class="patent-item"
+             data-status="{{ .Params.status | default "granted" }}">
+          {{ partial "patents/patent_card.html" . }}
+        </div>
+      {{ end }}
+      <p id="patent-empty" class="text-muted" style="display:none;">
+        No patents with this status.
+      </p>
+    </div>
+  </div>
+
+  {{/* Shared BibTeX modal */}}
+  {{ partial "bibtex_modal.html" . }}
+
+</div>
+
+{{ end }}
+
+{{ define "scripts" }}
+<script>
+  function filterPatents(filter) {
+    var items   = document.querySelectorAll('.patent-item');
+    var buttons = document.querySelectorAll('[data-filter]');
+    var empty   = document.getElementById('patent-empty');
+    var visible = 0;
+
+    buttons.forEach(function(btn) {
+      var isActive = btn.getAttribute('data-filter') === filter;
+      btn.classList.toggle('btn-primary',           isActive);
+      btn.classList.toggle('btn-outline-secondary', !isActive);
+    });
+
+    items.forEach(function(item) {
+      var show = filter === 'all' || item.getAttribute('data-status') === filter;
+      item.style.display = show ? '' : 'none';
+      if (show) visible++;
+    });
+
+    empty.style.display = visible === 0 ? '' : 'none';
+  }
+</script>
+{{ end }}

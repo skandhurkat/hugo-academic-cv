@@ -1,0 +1,77 @@
+{{/*
+  patents/patent_card.html — a single patent as a Bootstrap card.
+
+  Uses the shared #bibtex-modal (included once per page in list/single).
+  Reuses author_list.html via the standard `page` parameter (authors field).
+*/}}
+
+{{ $page := . }}
+
+{{ $prec := $page.Params.date_precision | default "day" }}
+{{ $date := $page.Date.Format "January 2, 2006" }}
+{{ if eq $prec "year"  }}{{ $date = $page.Date.Format "2006" }}
+{{ else if eq $prec "month" }}{{ $date = $page.Date.Format "January 2006" }}
+{{ end }}
+
+<div class="card pub-card mb-3" style="border-left: 3px solid var(--pub-color-other);">
+  <div class="card-body">
+
+    {{/* Status badge + first patent number + filing date */}}
+    <div class="d-flex flex-wrap align-items-baseline gap-1 mb-1">
+      {{ with $page.Params.status }}
+        {{/*
+          Bootstrap contextual badge colours:
+            granted   → success (green) — affirms the patent exists
+            pending   → warning (amber) — in-progress
+            abandoned → secondary (grey) — no longer active
+        */}}
+        {{ $cls := "text-bg-success" }}
+        {{ if eq . "pending"   }}{{ $cls = "text-bg-warning" }}{{ end }}
+        {{ if eq . "abandoned" }}{{ $cls = "text-bg-secondary" }}{{ end }}
+        <span class="pub-type-badge badge {{ $cls }}">{{ . }}</span>
+      {{ end }}
+
+      {{/* First patent number as a quick identifier in monospace */}}
+      {{ with $page.Params.identifiers }}
+        {{ with index . 0 }}
+          {{ with .number }}
+            <span class="text-muted"
+                  style="font-size: 0.85rem; font-family: var(--bs-font-monospace);">
+              {{ . }}
+            </span>
+          {{ end }}
+        {{ end }}
+      {{ end }}
+
+      <span class="text-muted" style="font-size: 0.85rem;">· Filed {{ $date }}</span>
+    </div>
+
+    {{/* Title */}}
+    <h3 class="card-title h6 mb-1">
+      <a href="{{ $page.RelPermalink }}" class="text-decoration-none">
+        {{ $page.Title }}
+      </a>
+    </h3>
+
+    {{/* Inventors */}}
+    <p class="card-text text-muted mb-2" style="font-size: 0.875rem;">
+      {{- partial "author_list.html" (dict "page" $page "max_authors" 6) -}}.
+      {{ with $page.Params.assignee }}
+        <span class="ms-1">Assignee: <em>{{ . }}</em></span>
+      {{ end }}
+    </p>
+
+    {{/* Abstract */}}
+    {{ with $page.Params.abstract }}
+      <p class="card-text pub-abstract mb-2" style="font-size: 0.875rem;">
+        {{ . | markdownify }}
+      </p>
+    {{ end }}
+
+    {{ partial "patents/buttons.html" $page }}
+
+  </div>
+</div>
+
+{{/* --- BibTeX modal (hidden until triggered by the BibTeX button) --- */}}
+{{ partial "bibtex_modal.html" $page }}

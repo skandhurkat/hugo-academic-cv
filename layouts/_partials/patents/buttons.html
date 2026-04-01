@@ -1,0 +1,89 @@
+{{/*
+  patents/buttons.html — Google Patents buttons and BibTeX for a patent.
+
+  Google Patents URL: https://patents.google.com/patent/<number>
+
+  BibTeX type: @patent (BibLaTeX). Falls back gracefully in plain BibTeX.
+
+  Scoping note:
+    identifiers is a slice of dicts [{jurisdiction, number}, ...].
+    Inside {{ range }}, `.` is the current dict.
+    Inside a nested {{ with }}, `.` changes to the with-value.
+    Always capture dict fields into variables BEFORE entering `with`,
+    otherwise you lose access to the other fields.
+*/}}
+
+{{ $page := . }}
+
+{{/* --- BibTeX generation --- */}}
+{{ $year := $page.Date.Format "2006" }}
+
+{{ $citekey := "Patent" }}
+{{ with $page.Params.authors }}
+  {{ $parts  := split (index . 0) " " }}
+  {{ $citekey = printf "%s%s" (index $parts (sub (len $parts) 1)) $year }}
+{{ end }}
+
+{{ $inventorStr := delimit ($page.Params.authors | default slice) " and " }}
+
+{{ $numbers := slice }}
+{{ range ($page.Params.identifiers | default slice) }}
+  {{ with .number }}{{ $numbers = $numbers | append . }}{{ end }}
+{{ end }}
+
+{{ $prec       := $page.Params.date_precision | default "day" }}
+{{ $filingDate := $page.Date.Format "January 2, 2006" }}
+{{ if eq $prec "year"  }}{{ $filingDate = $page.Date.Format "2006" }}
+{{ else if eq $prec "month" }}{{ $filingDate = $page.Date.Format "January 2006" }}
+{{ end }}
+
+{{ $note := printf "Filed: %s" $filingDate }}
+{{ with $page.Params.status }}{{ $note = printf "%s, %s" $note . }}{{ end }}
+
+{{ $bib := printf "@patent{%s,\n"          $citekey }}
+{{ $bib  = printf "%s  author   = {%s},\n" $bib $inventorStr }}
+{{ $bib  = printf "%s  title    = {%s},\n" $bib $page.Title }}
+{{ with delimit $numbers ", " }}
+{{ $bib  = printf "%s  number   = {%s},\n" $bib . }}{{ end }}
+{{ with $page.Params.assignee }}
+{{ $bib  = printf "%s  assignee = {%s},\n" $bib . }}{{ end }}
+{{ $bib  = printf "%s  year     = {%s},\n" $bib $year }}
+{{ $bib  = printf "%s  note     = {%s},\n" $bib $note }}
+{{ $bib  = printf "%s}"                    $bib }}
+
+{{/* --- Buttons --- */}}
+<div class="d-flex flex-wrap gap-1 mt-2">
+
+  {{ $identifiers       := $page.Params.identifiers | default slice }}
+  {{ $multiJurisdiction := gt (len $identifiers) 1 }}
+
+  {{ range $identifiers }}
+    {{/*
+      Capture BOTH fields into variables now, while `.` is still the dict.
+      If we enter `{{ with .number }}` first, `.` becomes the number string
+      and `.jurisdiction` is no longer accessible.
+    */}}
+    {{ $number       := .number }}
+    {{ $jurisdiction := .jurisdiction | default "" }}
+
+    {{ with $number }}
+      {{ $label := "Google Patents" }}
+      {{ if $multiJurisdiction }}
+        {{ $label = printf "Google Patents (%s)" $jurisdiction }}
+      {{ end }}
+      <a href="https://patents.google.com/patent/{{ . }}"
+         class="btn btn-outline-secondary btn-sm"
+         target="_blank"
+         rel="noopener">{{ $label }}</a>
+    {{ end }}
+  {{ end }}
+
+  <button type="button"
+          class="btn btn-outline-secondary btn-sm"
+          data-bs-toggle="modal"
+          data-bs-target="#bibtex-modal"
+          data-bibtex="{{ $bib | htmlEscape }}">
+    BibTeX
+  </button>
+
+</div>

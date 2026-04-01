@@ -1,0 +1,70 @@
+{{ define "main" }}
+
+<div class="container py-4">
+  <div class="row">
+    <div class="col-lg-9">
+
+      {{/* Status badge */}}
+      {{ with .Params.status }}
+        {{ $cls := "text-bg-success" }}
+        {{ if eq . "pending"   }}{{ $cls = "text-bg-warning" }}{{ end }}
+        {{ if eq . "abandoned" }}{{ $cls = "text-bg-secondary" }}{{ end }}
+        <span class="badge {{ $cls }} mb-2">{{ . }}</span>
+      {{ end }}
+
+      <h1 class="mb-2">{{ .Title }}</h1>
+
+      {{/* Inventors */}}
+      <p class="text-muted mb-1">
+        {{ partial "author_list.html" (dict "page" .) }}.
+        {{ with .Params.assignee }}
+          Assignee: <em>{{ . }}</em>.
+        {{ end }}
+      </p>
+
+      {{/* Filing date */}}
+      {{ $prec := .Params.date_precision | default "day" }}
+      {{ $date := .Date.Format "January 2, 2006" }}
+      {{ if eq $prec "year"  }}{{ $date = .Date.Format "2006" }}
+      {{ else if eq $prec "month" }}{{ $date = .Date.Format "January 2006" }}
+      {{ end }}
+      <p class="text-muted mb-3" style="font-size: 0.9rem;">
+        Filed <time datetime="{{ .Date.Format "2006-01-02" }}">{{ $date }}</time>
+      </p>
+
+      {{/* Patent identifiers table */}}
+      {{ with .Params.identifiers }}
+        <dl class="row mb-3" style="font-size: 0.9rem;">
+          {{ range . }}
+            {{ $number       := .number }}
+            {{ $jurisdiction := .jurisdiction | default "" }}
+            {{ with $number }}
+              <dt class="col-sm-3 pub-row-heading">{{ $jurisdiction }}</dt>
+              <dd class="col-sm-9" style="font-family: var(--bs-font-monospace);">
+                {{ . }}
+              </dd>
+            {{ end }}
+          {{ end }}
+        </dl>
+      {{ end }}
+
+      {{/* Buttons */}}
+      {{ partial "patents/buttons.html" . }}
+
+      {{/* Abstract */}}
+      {{ with .Params.abstract }}
+        <h2 class="h5 mt-4 mb-2">Abstract</h2>
+        <div>{{ . | markdownify }}</div>
+      {{ end }}
+
+      {{/* Markdown body — optional extended notes */}}
+      {{ with .Content }}
+        <hr class="my-4">
+        <div>{{ . }}</div>
+      {{ end }}
+
+    </div>
+  </div>
+</div>
+
+{{ end }}
