@@ -22,16 +22,10 @@
 {{ $allURL   := .all_url }}
 {{ $allLabel := .all_label }}
 {{ $cards    := .cards }}
-{{ $altBg    := .alt_bg | default false }}
-
-{{ $bgStyle := "" }}
-{{ if $altBg }}
-  {{ $bgStyle = "background-color: var(--bs-tertiary-bg);" }}
-{{ end }}
 
 <section id="{{ $id }}"
-         class="d-flex align-items-center"
-         style="min-height: 100vh; {{ $bgStyle | safeCSS }}">
+         class="d-flex align-items-center home-section"
+         style="min-height: 100vh;">
   <div class="container-md py-5">
     <div class="row g-5">
 

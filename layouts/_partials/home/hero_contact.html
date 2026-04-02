@@ -7,13 +7,10 @@
 
 {{/* Accept either a plain page (from direct call) or a dict with home + alt_bg */}}
 {{ $home   := .home | default . }}
-{{ $altBg  := .alt_bg | default false }}
-{{ $bgStyle := "" }}
-{{ if $altBg }}{{ $bgStyle = "background-color: var(--bs-tertiary-bg);" }}{{ end }}
 
 <section id="contact"
-         class="d-flex align-items-center"
-         style="min-height: 100vh; {{ $bgStyle }}">
+         class="d-flex align-items-center home-section"
+         style="min-height: 100vh;">
   <div class="container-md py-5">
     <div class="row g-5">
 

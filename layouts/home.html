@@ -34,7 +34,6 @@
 
 {{ range site.Menus.main }}
   {{ $menuName := .Name | lower }}
-  {{ $altBg    := eq (mod $sectionIndex 2) 1 }}
   {{ $cards    := "" }}
   {{ $allURL   := .URL }}
   {{ $allLabel := printf "All %s" (.Name | lower) }}
@@ -114,7 +113,6 @@
         "all_url"   $allURL
         "all_label" $allLabel
         "cards"     $cards
-        "alt_bg"    $altBg
     ) }}
     {{ $sectionIndex = add $sectionIndex 1 }}
   {{ end }}

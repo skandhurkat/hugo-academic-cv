@@ -84,6 +84,18 @@ main {
 }
 
 /* ---------------------------------------------------------------------------
+   Home page sections - Set up alternating backgrounds
+---------------------------------------------------------------------------- */
+.home-section:first-of-type {
+  padding-top: 50px;
+}
+
+.home-section:nth-of-type(even) {
+  background-color: var(--bs-tertiary-bg)
+}
+
+
+/* ---------------------------------------------------------------------------
    Bio section portrait — circular headshot matching old Academic theme style.
    The col is text-center so the img auto-centres as a block element.
 --------------------------------------------------------------------------- */
