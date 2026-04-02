@@ -42,9 +42,9 @@
 
 {{/* --- Status badge class --- */}}
 {{ $status  := $page.Params.status | default "active" }}
-{{ $cls     := "text-bg-success" }}
+{{ $cls     := "text-bg-secondary" }}
 {{ if eq $status "completed" }}{{ $cls = "text-bg-primary" }}{{ end }}
-{{ if eq $status "archived"  }}{{ $cls = "text-bg-secondary" }}{{ end }}
+{{ if eq $status "active"    }}{{ $cls = "text-bg-success" }}{{ end }}
 
 <div class="card pub-card mb-3"
      style="border-left: 3px solid var(--bs-primary);">
