@@ -94,7 +94,6 @@ main {
   background-color: var(--bs-tertiary-bg)
 }
 
-
 /* ---------------------------------------------------------------------------
    Bio section portrait — circular headshot matching old Academic theme style.
    The col is text-center so the img auto-centres as a block element.
@@ -211,8 +210,15 @@ main {
 }
 
 /* ---------------------------------------------------------------------------
-   Utility: pub-row-heading (kept from your original CSS)
+   Utility: pub-row-heading
 --------------------------------------------------------------------------- */
 .pub-row-heading {
   font-weight: bold;
+}
+
+/* ---------------------------------------------------------------------------
+   Remove underlines from links
+--------------------------------------------------------------------------- */
+a {
+  text-decoration: none;
 }
