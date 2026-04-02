@@ -1,49 +1,23 @@
 +++
-title          = 'Portable display device'
-date           = '2010-11-23'
+title          = 'Explosive-Driven Jet Propulsion Backpack'
+date           = '1994-11-02'
 date_precision = 'day'
 draft          = false
 
-# List of inventor names — same display rules as publication authors (uses params.author_name for bolding).
-# Your name (params.author_name) will be bolded automatically.
 authors = [
-    "Jody Akana",
-    "Bartley K. Andre",
-    "Daniel J. Coster",
-    "Daniele De Iuliis",
-    "Evans Hankey",
-    "Richard P. Howarth",
-    "Jonathan P. Ive",
-    "Steve Jobs",
-    "Duncan Robert Kerr",
-    "Shin Nishibori",
-    "Matthew Dean Rohrbach",
-    "Peter Russell-Clarke",
-    "Christopher J. Stringer",
-    "Eugene Antony Whang",
-    "Rico Zorkendorfer",
-    ]
-
-# Assignee: the legal owner of the patent (company or "Personal")
-assignee = ''
-
-# Patent identifiers — one entry per jurisdiction.
-# The Google Patents button is constructed from jurisdiction + number.
-# Example:
-#   identifiers = [
-#       { jurisdiction = "US", number = "US11234567B2" },
-#       { jurisdiction = "EP", number = "EP3456789A1"}
-#   ]
-identifiers = [
-    { jurisdiction = "US", number = "USD670286S1" },
-    { jurisdiction = "TW", number = "TW099303076F" }
+  'Wile E. Coyote',
+  'Albert C. Me'
 ]
 
-# Status: granted | pending | abandoned
+assignee = 'Acme Corporation'
+
+identifiers = [
+  { jurisdiction = "TW", number = "TW533322B" }
+]
+
 status = 'granted'
 
-abstract = """The ornamental design for a portable display device, as shown and
-described."""
+abstract = """
+This patent details a jet propulsion backpack utilizing explosive charges to propel the user to high velocities. It is designed for quick chases and rapid movement, but it has shown to have reliability issues when used at extreme altitudes or over long distances.
+"""
 +++
-
-<!-- Optional: notes, claims summary, or other content in Markdown. -->

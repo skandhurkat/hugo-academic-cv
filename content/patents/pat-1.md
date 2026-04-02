@@ -1,32 +1,23 @@
 +++
-title          = 'Method of swinging on a swing'
-date           = '2000-11-17'
+title          = 'Self-Propelled Coyote Rocket Skates'
+date           = '1992-05-15'
 date_precision = 'day'
 draft          = false
 
-# List of inventor names — same display rules as publication authors (uses params.author_name for bolding).
-# Your name (params.author_name) will be bolded automatically.
-authors = ["Steven Olson"]
+authors = [
+  'Wile E. Coyote',
+  'Benjamin L. Acme'
+]
 
-# Assignee: the legal owner of the patent (company or "Personal")
-assignee = 'Individual'
+assignee = 'Acme Corporation'
 
-# Patent identifiers — one entry per jurisdiction.
-# The Google Patents button is constructed from jurisdiction + number.
-# Example:
-#   identifiers = [
-#       { jurisdiction = "US", number = "US11234567B2" },
-#       { jurisdiction = "EP", number = "EP3456789A1"}
-#   ]
-identifiers = [{ jurisdiction = "US", number = "US6368227B1"}]
+identifiers = [
+  { jurisdiction = "US", number = "US4999123A" }
+]
 
-# Status: granted | pending | abandoned
-status = 'granted'
+status = 'expired'
 
-abstract = """A method of swing on a swing is disclosed, in which a user
-positioned on a standard swing suspended by two chains from a substantially
-horizontal tree branch induces side to side motion by pulling alternately on one
-chain and then the other."""
+abstract = """
+This patent covers the design and operation of rocket-powered roller skates intended to provide high-speed maneuverability for the user. The device features a self-contained propulsion system, including a compact rocket engine, a stability control mechanism, and an advanced braking system.
+"""
 +++
-
-<!-- Optional: notes, claims summary, or other content in Markdown. -->

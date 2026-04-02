@@ -1,6 +1,6 @@
 baseURL = 'https://example.org/'
 languageCode = 'en-US'
-title = 'My New Hugo Site'
+title = 'Wile E. Coyote'
 
 # ---------------------------------------------------------------------------
 # Taxonomies
@@ -70,10 +70,9 @@ summaryLength = 100
   # author_name is used in two places:
   #   1. author_list.html bolds your name in author lists
   #   2. JSON-LD Person schema (later)
-  author_name  = "Alice Smith"
-  author_title = "Research Scientist"
-  author_bio   = "I work on things."
-  author_email = "alice@example.com"
+  author_name  = "Wile E. Coyote"
+  author_title = "Genius"
+  author_email = "coyote@acme.com"
 
   # --- Homepage section limits ---
   # How many items to show in each homepage hero section before "see all".

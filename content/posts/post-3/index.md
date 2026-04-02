@@ -1,12 +1,26 @@
 +++
-title = 'Post 3'
-date = 2023-03-15T11:00:00-07:00
-draft = false
-tags = ['red','green','blue']
+title   = 'The Rise and Fall of the Coyote Canyon Tunnel System'
+date    = '2026-02-01'
+draft   = false
+
+authors = ["Wile E. Coyote"]
+
+# Tags and Categories
+tags       = ["engineering", "tunnels", "escape"]
+categories = ["engineering"]
+
+related_projects = ["projects/proj-2"]
+
 +++
 
-Occaecat aliqua consequat laborum ut ex aute aliqua culpa quis irure esse magna dolore quis. Proident fugiat labore eu laboris officia Lorem enim. Ipsum occaecat cillum ut tempor id sint aliqua incididunt nisi incididunt reprehenderit. Voluptate ad minim sint est aute aliquip esse occaecat tempor officia qui sunt. Aute ex ipsum id ut in est velit est laborum incididunt. Aliqua qui id do esse sunt eiusmod id deserunt eu nostrud aute sit ipsum. Deserunt esse cillum Lorem non magna adipisicing mollit amet consequat.
+When I first conceived of the **Coyote Canyon Tunnel System**, I thought it would be the ultimate escape mechanism. The idea was simple: instead of running after the Road Runner, why not create a series of interconnected tunnels that would allow me to pop up anywhere in the canyon, surprising my quarry from all directions?
+
+The initial design was ambitious. Using a combination of powerful drills, explosive charges, and a lightweight tunnel construction system, I thought I could create a network that would allow me to get ahead of the Road Runner, making him think I was one step ahead at all times. The tunnels were easy enough to dig, and the technology worked at first.
+
+However, the fatal flaw came with tunnel entrances and exits. As I quickly discovered, placing exits too close together means I often end up in a loop—escaping from one entrance only to find myself right back at the same spot. Worse still, the tunnels were often unstable. After several miscalculations, sections of the tunnels collapsed, leaving me stranded in the very traps I had set.
+
+In the end, the **Coyote Canyon Tunnel System** was abandoned, though not without valuable lessons in subterranean engineering. While the tunnels may not have been the answer to catching the Road Runner, they represent a key chapter in my pursuit of advanced escape technologies.
+
+Maybe one day, with more precise calculations and a better understanding of tunnel dynamics, I’ll get it right. But for now, it remains a cautionary tale of how even the most ambitious plans can backfire... literally.
 
 ![Bryce Canyon National Park](bryce-canyon.jpg)
-
-Sit excepteur do velit veniam mollit in nostrud laboris incididunt ea. Amet eu cillum ut reprehenderit culpa aliquip labore laborum amet sit sit duis. Laborum id proident nostrud dolore laborum reprehenderit quis mollit nulla amet veniam officia id id. Aliquip in deserunt qui magna duis qui pariatur officia sunt deserunt.
