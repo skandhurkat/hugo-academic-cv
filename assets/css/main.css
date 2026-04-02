@@ -1,338 +1,151 @@
 /*
- * main.css — loaded via Hugo Pipes (css.Build).
+ * main.css — loaded via Hugo Pipes (resources.ExecuteAsTemplate).
  *
- * Fonts: Montserrat (headings) + Roboto (body) loaded via Google Fonts in head.html.
- * Colour custom properties: injected via inline <style> in head.html from hugo.toml params.
+ * This file is treated as a Go template, so you can use Hugo template
+ * syntax here. Site params are available as {{ site.Params.* }}.
+ *
+ * The pattern is:
+ *   1. Define CSS custom properties on :root using values from hugo.toml
+ *   2. Write all rules in terms of those variables
+ *   3. Override variables in [data-bs-theme="dark"] for dark mode
  */
 
-/*************************************************
- *  Google Fonts — referenced here as a reminder;
- *  actual <link> is in head.html to avoid render-blocking.
- *  font-family: 'Montserrat', sans-serif  — headings
- *  font-family: 'Roboto', sans-serif      — body
- *  font-family: 'Roboto Mono', monospace  — code
- *************************************************/
-
-/*************************************************
- *  Publication type accent colours
- *  Sourced from [params.pub_colors] in hugo.toml.
- *  Values are injected by the inline <style> block in head.html.
- *  Defaults here are fallbacks only (css.Build doesn't run Go templates).
- *************************************************/
+/* ---------------------------------------------------------------------------
+   Publication type accent colours
+   Sourced from [params.pub_colors] in hugo.toml.
+   The `| default` filter provides a fallback if the user hasn't set a value.
+--------------------------------------------------------------------------- */
 :root {
-  --pub-color-conference:  #378ADD;
-  --pub-color-journal:     #1D9E75;
-  --pub-color-preprint:    #EF9F27;
-  --pub-color-thesis:      #7F77DD;
-  --pub-color-book:        #D85A30;
-  --pub-color-bookchapter: #D85A30;
-  --pub-color-other:       #888780;
+  --pub-color-conference:  {{ site.Params.pub_colors.conference  | default "#378ADD" }};
+  --pub-color-journal:     {{ site.Params.pub_colors.journal     | default "#1D9E75" }};
+  --pub-color-preprint:    {{ site.Params.pub_colors.preprint    | default "#EF9F27" }};
+  --pub-color-thesis:      {{ site.Params.pub_colors.thesis      | default "#7F77DD" }};
+  --pub-color-book:        {{ site.Params.pub_colors.book        | default "#D85A30" }};
+  --pub-color-bookchapter: {{ site.Params.pub_colors.bookchapter | default "#D85A30" }};
+  --pub-color-other:       {{ site.Params.pub_colors.other       | default "#888780" }};
 }
 
-/*************************************************
- *  Core
- *************************************************/
+/* ---------------------------------------------------------------------------
+   Shrinking navbar
+   The navbar starts tall (--navbar-tall-padding top+bottom) and collapses
+   to Bootstrap's default (~8px padding) when .navbar-scrolled is added by JS.
 
-html, body {
-  height: 100%;
+   We use padding-top on body equal to the tall navbar height so content
+   isn't hidden underneath the fixed navbar. This also transitions smoothly.
+
+   Calculation:
+     tall navbar height ≈ brand font-size (1.5rem ≈ 24px) + 2 × tall padding
+     --navbar-tall-py: 1.25rem (20px) → total ≈ 64px
+     collapsed height ≈ 24px + 2 × 8px = 40px → Bootstrap adds borders → ~56px
+--------------------------------------------------------------------------- */
+:root {
+  --navbar-tall-py:      1.25rem;
+  --navbar-short-py:     0.5rem;
+  --navbar-tall-height:  4rem;    /* approximate — used for body padding-top */
+  --navbar-short-height: 3.5rem;  /* Bootstrap default */
 }
 
-html {
-  font-family: 'Roboto', sans-serif;
-  font-size: 16px;
-  color: rgba(0,0,0,0.8);
-  line-height: 1.65;
-}
-
-@media screen and (min-width: 58em) {
-  html {
-    font-size: 20px;
-  }
-}
-
-body {
-  font-family: inherit;
-  font-size: 1rem;
-  line-height: inherit;
-  color: inherit;
-  background-color: #fff;
-  margin-top: 70px; /* Offset for fixed navbar */
-  padding-top: 0;
-}
-
-/* Shrinking navbar: body margin transitions with navbar height */
-body.navbar-scrolled {
-  margin-top: 50px;
-}
-
-p {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-ul, ol, dl {
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-h1, h2, h3, h4, h5, h6 {
-  font-family: 'Montserrat', sans-serif;
-  font-weight: 400;
-  margin-top: 1rem;
-  margin-bottom: .5rem;
-  line-height: 1.25;
-  color: #313131;
-  text-rendering: optimizeLegibility;
-  overflow-wrap: break-word;
-  word-wrap: break-word;
-  word-break: break-word;
-}
-
-h1 { font-size: 2.25rem; }
-h2 { margin-top: 1rem; font-size: 1.5rem; }
-h3 { font-weight: 700; margin-top: 1.5rem; font-size: 1.25rem; }
-h4, h5, h6 { font-weight: 700; margin-top: 1rem; font-size: 1rem; }
-
-a {
-  color: var(--bs-primary, #2962ff);
-  text-decoration: none;
-  transition: color 0.6s ease;
-}
-
-a:hover, a:focus {
-  color: var(--bs-primary, #2962ff);
-}
-
-img, video {
-  height: auto;
-  max-width: 100%;
-  display: block;
-}
-
-pre, code {
-  font-family: 'Roboto Mono', monospace;
-}
-
-/*************************************************
- *  Navbar
- *************************************************/
-
-.navbar {
-  min-height: 70px;
-  font-family: 'Roboto', sans-serif;
-  font-weight: 400;
-}
-
-/* Tall state — extra padding, transitions down on scroll */
 #main-navbar {
-  padding-top:    1.25rem;
-  padding-bottom: 1.25rem;
-  transition: padding 0.3s ease, box-shadow 0.3s ease, min-height 0.3s ease;
+  padding-top:    var(--navbar-tall-py);
+  padding-bottom: var(--navbar-tall-py);
+  transition: padding 0.3s ease, box-shadow 0.3s ease;
 }
 
 #main-navbar.navbar-scrolled {
-  padding-top:    0.5rem;
-  padding-bottom: 0.5rem;
-  min-height: 50px;
-  box-shadow: 0 0.125rem 0.25rem 0 rgba(0,0,0,.11);
+  padding-top:    var(--navbar-short-py);
+  padding-bottom: var(--navbar-short-py);
+  box-shadow: 0 1px 8px rgba(0, 0, 0, 0.08);
 }
 
 body {
-  transition: margin-top 0.3s ease;
+  padding-top: var(--navbar-tall-height);
+  transition: padding-top 0.3s ease;
 }
 
-/*************************************************
- *  Home Sections
- *************************************************/
-
-.home-section {
-  padding: 110px 0 110px 0;
+body.navbar-scrolled {
+  padding-top: var(--navbar-short-height);
 }
 
-.home-section:first-of-type {
-  padding-top: 50px;
+/* ---------------------------------------------------------------------------
+   Full-height layout
+   Forces the footer to the bottom of the viewport even on short pages.
+
+   We use min-height: calc(100vh - ...) on <main> rather than flexbox on
+   <body>, because flexbox on the body breaks position:sticky on the navbar.
+   position:sticky requires the sticky element's scroll container to be the
+   viewport — a flex body creates an internal scroll context that prevents this.
+
+   We can't know the exact navbar + footer height at CSS authoring time, so
+   we use a reasonable estimate (4rem navbar + 4rem footer = 8rem).
+   If your footer is taller, increase this value.
+--------------------------------------------------------------------------- */
+main {
+  min-height: calc(100vh - 8rem);
 }
 
-/* Alternating backgrounds — pure CSS, no template logic needed */
-.home-section:nth-of-type(even) {
-  background-color: rgb(247, 247, 247);
-}
-
-[data-bs-theme="dark"] .home-section {
-  background-color: hsla(231, 15%, 18%, 1);
-}
-
-[data-bs-theme="dark"] .home-section:nth-of-type(even) {
-  background-color: hsla(231, 15%, 16%, 1);
-}
-
-@media screen and (max-width: 768px) {
-  .home-section {
-    padding: 60px 0 60px 0;
-  }
-  .home-section:first-of-type {
-    padding-top: 40px;
-  }
-}
-
-.section-heading h1 {
-  margin: 0 0 10px 0;
-}
-
-.section-heading p {
-  font-weight: 400;
-  font-size: 1.1rem;
-  color: #b2b2b2;
-}
-
-.see-all {
-  margin-top: 2rem;
-  text-transform: uppercase;
-  font-size: 0.9rem;
-}
-
-/*************************************************
- *  About / Bio widget
- *************************************************/
-
-#profile {
-  text-align: center;
-  padding: 30px 10px;
-}
-
+/* ---------------------------------------------------------------------------
+   Bio section portrait — circular headshot matching old Academic theme style.
+   The col is text-center so the img auto-centres as a block element.
+--------------------------------------------------------------------------- */
 .portrait {
   width: 200px;
   height: 200px;
-  margin: 0 auto;
-  border-radius: 50%;
   object-fit: cover;
+  border-radius: 50%;
+  margin: 0 auto 1rem;
   display: block;
 }
 
+/* Portrait title block */
 .portrait-title h2 {
-  font-size: 1.75em;
-  font-weight: 300;
-  color: #000000;
-  margin: 20px 0 10px 0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  margin-bottom: 0.25rem;
 }
 
 .portrait-title h3 {
-  font-size: 1rem;
-  font-weight: 300;
-  color: rgba(0,0,0,0.54);
-  margin: 0px 0 10px 0;
+  font-size: 1.1rem;
+  font-weight: 400;
+  color: var(--bs-secondary-color);
+  margin-bottom: 0.25rem;
 }
 
-[data-bs-theme="dark"] .portrait-title h2 {
-  color: #fff;
+/* ---------------------------------------------------------------------------
+   Section heading column — matches the old Academic theme's .section-heading.
+   Adds top padding so the heading aligns with the top of the first card,
+   and makes it sticky so it stays visible as the user scrolls through cards.
+--------------------------------------------------------------------------- */
+.section-heading {
+  padding-top: 0.25rem;
 }
 
-[data-bs-theme="dark"] .portrait-title h3 {
-  color: rgba(255,255,255,0.54);
+@media (min-width: 992px) {
+  .section-heading {
+    position: sticky;
+    top: 4rem;   /* just below the collapsed navbar */
+    align-self: flex-start;  /* required for sticky inside a flex/grid row */
+  }
 }
 
-.network-icon {
-  display: inline-flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: center;
-  list-style: none;
-  padding: 0;
-  margin-top: 30px;
-}
-
-.network-icon li {
-  margin-right: 10px;
-}
-
-.network-icon li:last-of-type {
-  margin-right: 0;
-}
-
-.network-icon li:hover {
-  transform: scale(1.2);
-}
-
-.big-icon {
-  font-size: 2rem;
-}
-
-ul.ul-interests li {
-  font-size: 0.9rem;
-}
-
-ul.ul-edu {
-  list-style: none;
-  padding-left: 0;
-}
-
-ul.ul-edu li {
-  position: relative;
-  padding: 0px 15px 4px 3px;
-}
-
-ul.ul-edu li .description p {
-  margin: 0;
-}
-
-ul.ul-edu li .description p.course {
-  font-size: 0.9rem;
-}
-
-ul.ul-edu li .description p.institution {
-  font-size: 0.75rem;
-  color: rgba(0,0,0,0.6);
-}
-
-[data-bs-theme="dark"] ul.ul-edu li .description p.institution {
-  color: rgba(255,255,255,0.6);
-}
-
-/*************************************************
- *  Experience timeline
- *************************************************/
-
-.exp-title {
-  text-transform: none !important;
-}
-
-.exp-company {
-  font-weight: normal !important;
-  text-transform: none !important;
-}
-
-.exp-meta {
-  font-size: 0.8rem;
-}
-
-.experience .card-text,
-.experience .card-text p {
-  font-size: 0.75rem !important;
-}
-
-.experience .m-2 .border,
-.experience .col.border-right {
-  border-color: var(--bs-primary, #2962ff) !important;
-}
-
-.experience .m-2 .border.exp-fill {
-  background-color: var(--bs-primary, #2962ff) !important;
-}
-
-/*************************************************
- *  Publication cards
- *************************************************/
-
+/* ---------------------------------------------------------------------------
+   Publication cards
+   .pub-card is the base. The border-left colour is set via an inline style
+   in the template (style="border-left-color: var(--pub-color-conference)")
+   so it picks up the right variable per publication type.
+--------------------------------------------------------------------------- */
 .pub-card {
-  border-left: 3px solid transparent;
+  border-left: 3px solid transparent;  /* width set here, colour set inline */
+  border-radius: 0;                     /* left accent + full border = awkward;
+                                           use card's own Bootstrap border instead */
   transition: box-shadow 0.15s ease;
-  margin-bottom: 1.5rem;
 }
 
 .pub-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
+/* Abstract truncation: shows ~3 lines then fades out.
+   -webkit-line-clamp is now standard in all modern browsers. */
 .pub-abstract {
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -340,6 +153,7 @@ ul.ul-edu li .description p.institution {
   overflow: hidden;
 }
 
+/* Publication type badge — small pill above the title */
 .pub-type-badge {
   font-size: 0.7rem;
   font-weight: 500;
@@ -349,93 +163,44 @@ ul.ul-edu li .description p.institution {
   letter-spacing: 0.02em;
 }
 
+/* Author list: your own name is wrapped in <strong class="pub-self-author"> */
 .pub-self-author {
   font-weight: 600;
 }
 
-.pub-row-heading {
-  font-weight: bold;
-}
-
-/*************************************************
- *  BibTeX modal
- *************************************************/
-
+/* ---------------------------------------------------------------------------
+   BibTeX modal
+   The modal is Bootstrap's built-in component; we just style the textarea.
+--------------------------------------------------------------------------- */
 .bibtex-textarea {
-  font-family: 'Roboto Mono', monospace;
+  font-family: var(--bs-font-monospace);
   font-size: 0.78rem;
   resize: none;
-  background-color: var(--bs-tertiary-bg);
+  background-color: var(--bs-tertiary-bg);  /* adapts to dark mode automatically */
   border: 1px solid var(--bs-border-color);
   color: var(--bs-body-color);
 }
 
-/*************************************************
- *  Post ToC
- *************************************************/
-
+/* ---------------------------------------------------------------------------
+   Post body — required for Bootstrap scrollspy on a non-body element.
+   ScrollSpy needs overflow-y to be auto or scroll on the watched element.
+   Without this, scrollspy won't fire activate events correctly.
+--------------------------------------------------------------------------- */
 #post-body {
-  overflow-y: visible;
+  overflow-y: visible;  /* content flows normally */
 }
 
+/* ToC collapse — instant, no animation (scroll-driven feel) */
 #toc-nav .toc-children {
-  display: block;
+  display: block;       /* collapse class sets display:none via Bootstrap */
 }
-
 #toc-nav .toc-children.collapse {
   display: none;
 }
 
-#toc-nav .nav-link.active {
-  color: var(--bs-primary, #2962ff) !important;
-  font-weight: 500;
-}
-
-#toc-nav .nav-link:hover {
-  color: var(--bs-primary, #2962ff) !important;
-}
-
-/*************************************************
- *  Contact widget
- *************************************************/
-
-.contact-widget .fa-ul {
-  margin-left: 3.14285714rem;
-}
-
-.contact-widget li {
-  padding-top: 0.8rem;
-  margin-bottom: 0.3rem;
-}
-
-/*************************************************
- *  Footer
- *************************************************/
-
-footer {
-  margin: 4rem 0 0;
-  padding: 2rem 0;
-  width: 100%;
-}
-
-footer p {
-  font-size: 0.75rem;
-  text-align: center;
-  color: rgba(0,0,0,0.54);
-}
-
-[data-bs-theme="dark"] footer p {
-  color: rgba(255,255,255,0.54);
-}
-
-/*************************************************
- *  Text muted (override Bootstrap)
- *************************************************/
-
-.text-muted {
-  color: rgba(0,0,0,0.54) !important;
-}
-
-[data-bs-theme="dark"] .text-muted {
-  color: rgba(255,255,255,0.54) !important;
+/* ---------------------------------------------------------------------------
+   Utility: pub-row-heading (kept from your original CSS)
+--------------------------------------------------------------------------- */
+.pub-row-heading {
+  font-weight: bold;
 }

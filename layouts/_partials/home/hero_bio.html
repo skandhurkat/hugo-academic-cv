@@ -1,117 +1,145 @@
 {{/*
-  home/hero_bio.html — bio section, matching original Academic theme layout.
-  Left col: portrait, name, title, employer, social icons (in #profile div).
-  Right col: biography text, then interests + education in two sub-columns.
+home/hero_bio.html — the bio hero section.
+
+Layout (large screens):
+col-lg-4  — headshot, name, employer, social icons
+col-lg-8  — bio (.Content), then two sub-columns: interests | education
+
+The section id="bio" matches the navbar anchor href="#bio".
 */}}
 
 {{ $home := . }}
 
-<section id="bio" class="home-section">
-  <div class="container">
-    <div class="row" itemprop="author" itemscope itemtype="http://schema.org/Person">
-
-      {{/* Left column */}}
-      <div class="col-12 col-lg-4">
-        <div id="profile">
-
-          {{ with $home.Params.headshot }}
+<section id="bio"
+class="d-flex align-items-center"
+style="min-height: 100vh;">
+<div class="container-md py-5">
+    <div class="row g-5">
+        
+        {{/* --- Left column: headshot, name, employer, social --- */}}
+        <div class="col-lg-4 text-center">
+            
+            {{/* Circular headshot */}}
+            {{ with $home.Params.headshot }}
             {{ $imgURL := "" }}
             {{ if or (hasPrefix . "http://") (hasPrefix . "https://") }}
-              {{ $imgURL = . }}
+            {{ $imgURL = . }}
             {{ else if hasPrefix . "/" }}
-              {{ $imgURL = . | relURL }}
+            {{ $imgURL = . | relURL }}
             {{ else }}
-              {{ with $home.Resources.GetMatch . }}
-                {{ $imgURL = .RelPermalink }}
-              {{ end }}
+            {{ with $home.Resources.GetMatch . }}
+            {{ $imgURL = .RelPermalink }}
+            {{ end }}
             {{ end }}
             {{ with $imgURL }}
-              <img class="portrait" src="{{ . }}"
-                   itemprop="image"
-                   alt="{{ site.Params.author_name }}">
+            <img src="{{ . }}"
+            alt="{{ site.Params.author_name }}"
+            class="portrait">
             {{ end }}
-          {{ end }}
-
-          <div class="portrait-title">
-            <h2 itemprop="name">{{ site.Params.author_name }}</h2>
-            {{ with site.Params.author_title }}
-              <h3 itemprop="jobTitle">{{ . }}</h3>
             {{ end }}
-            {{ with $home.Params.employer }}
-              <h3 itemprop="worksFor" itemscope itemtype="http://schema.org/Organization">
-                {{ with $home.Params.employer_url }}
-                  <a href="{{ . }}" target="_blank" rel="noopener" itemprop="url">
-                    <span itemprop="name">{{ $home.Params.employer }}</span>
-                  </a>
-                {{ else }}
-                  <span itemprop="name">{{ $home.Params.employer }}</span>
+            
+            <div class="portrait-title">
+                <h2>{{ site.Params.author_name }}</h2>
+                {{ with site.Params.author_title }}
+                <h3>{{ . }}</h3>
                 {{ end }}
-              </h3>
-            {{ end }}
-          </div>
-
-          {{ with $home.Params.social }}
-            <ul class="network-icon" aria-label="Social links">
-              {{ range . }}
+                {{ with $home.Params.employer }}
+                <h3>
+                    {{ with $home.Params.employer_url }}
+                    <a href="{{ . }}" target="_blank" rel="noopener">
+                        {{ $home.Params.employer }}
+                    </a>
+                    {{ else }}
+                    {{ $home.Params.employer }}
+                    {{ end }}
+                </h3>
+                {{ end }}
+            </div>
+            
+            {{/* Social icons */}}
+            {{ with $home.Params.social }}
+            <div class="d-flex flex-wrap justify-content-center gap-2">
+                {{ range . }}
                 {{ $rel := .rel | default "" }}
-                <li>
-                  <a href="{{ .url }}"
-                     itemprop="sameAs"
-                     title="{{ .name }}"
-                     aria-label="{{ .name }}"
-                     {{ with $rel }}rel="{{ . }}"{{ end }}
-                     {{ if not (hasPrefix .url "mailto:") }}target="_blank"{{ end }}>
-                    <i class="{{ .icon }} big-icon" aria-hidden="true"></i>
-                  </a>
-                </li>
-              {{ end }}
-            </ul>
-          {{ end }}
-
+                <a href="{{ .url }}"
+                title="{{ .name }}"
+                aria-label="{{ .name }}"
+                {{ with $rel }}rel="{{ . }}"{{ end }}
+                {{ if not (hasPrefix .url "mailto:") }}
+                target="_blank"
+                {{ end }}
+                class="text-muted"
+                style="font-size: 1.4rem; text-decoration: none;">
+                <i class="{{ .icon }}" aria-hidden="true"></i>
+            </a>
+            {{ end }}
         </div>
-      </div>
-
-      {{/* Right column */}}
-      <div class="col-12 col-lg-8" itemprop="description">
-        <h1>Biography</h1>
-
-        {{ with $home.Content }}
-          <div>{{ . }}</div>
         {{ end }}
-
-        <div class="row">
-
-          {{ with $home.Params.interests }}
-            <div class="col-md-5">
-              <h3>Interests</h3>
-              <ul class="ul-interests">
-                {{ range . }}
-                  <li>{{ . }}</li>
-                {{ end }}
-              </ul>
-            </div>
-          {{ end }}
-
-          {{ with $home.Params.education }}
-            <div class="col-md-7">
-              <h3>Education</h3>
-              <ul class="ul-edu fa-ul">
-                {{ range . }}
-                  <li>
-                    <i class="fa-li fa-solid fa-graduation-cap" aria-hidden="true"></i>
-                    <div class="description">
-                      <p class="course">{{ .degree }}</p>
-                      <p class="institution">{{ .institution }}</p>
-                    </div>
-                  </li>
-                {{ end }}
-              </ul>
-            </div>
-          {{ end }}
-
-        </div>
-      </div>
-
+        
     </div>
-  </div>
+    
+    {{/* --- Right column: bio + interests/education --- */}}
+    <div class="col-lg-8">
+        
+        {{/* Biography — from .Content (markdown below front matter) */}}
+        {{ with $home.Content }}
+        <div class="mb-4" style="font-size: 1.05rem; line-height: 1.7;">
+            {{ . }}
+        </div>
+        {{ end }}
+        
+        {{/* Interests + Education — two sub-columns */}}
+        <div class="row g-4">
+            
+            {{/* Interests */}}
+            {{ with $home.Params.interests }}
+            <div class="col-sm-6">
+                <h2 class="h6 text-uppercase text-muted mb-2"
+                style="letter-spacing: 0.05em; font-size: 0.75rem;">
+                Interests
+            </h2>
+            <ul class="list-unstyled mb-0">
+                {{ range . }}
+                <li class="d-flex align-items-center gap-2 mb-1">
+                    <i class="fa-solid fa-circle-dot"
+                    style="font-size: 0.5rem; color: var(--bs-primary);"
+                    aria-hidden="true"></i>
+                    {{ . }}
+                </li>
+                {{ end }}
+            </ul>
+        </div>
+        {{ end }}
+        
+        {{/* Education */}}
+        {{ with $home.Params.education }}
+        <div class="col-sm-6">
+            <h2 class="h6 text-uppercase text-muted mb-2"
+            style="letter-spacing: 0.05em; font-size: 0.75rem;">
+            Education
+        </h2>
+        <ul class="list-unstyled mb-0">
+            {{ range . }}
+            <li class="d-flex align-items-start gap-2 mb-2">
+                <i class="fa-solid fa-graduation-cap mt-1"
+                style="font-size: 0.9rem; color: var(--bs-primary); flex-shrink: 0;"
+                aria-hidden="true"></i>
+                <div>
+                    <div style="font-size: 0.875rem; font-weight: 500;">
+                        {{ .degree }}
+                    </div>
+                    <div class="text-muted" style="font-size: 0.8rem;">
+                        {{ .institution }}{{ with .year }}, {{ . }}{{ end }}
+                    </div>
+                </div>
+            </li>
+            {{ end }}
+        </ul>
+    </div>
+    {{ end }}
+    
+</div>
+</div>
+</div>
+</div>
 </section>

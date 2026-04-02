@@ -1,15 +1,20 @@
 {{/*
-  home/hero_section.html — a homepage content section.
+  home/hero_section.html — generic content hero section.
 
-  Alternating backgrounds handled by CSS .home-section:nth-of-type(even),
-  exactly as the original Academic theme did. No template logic needed.
+  Parameters (passed as a dict):
+    id         — section id, e.g. "publications" (matches navbar anchor)
+    title      — section heading, e.g. "Publications"
+    all_url    — URL to the full list page, e.g. "/publications/"
+    all_label  — link text, e.g. "All publications"
+    cards      — HTML string of rendered cards (pre-rendered by home.html)
+    alt_bg     — bool, if true applies a subtle alternate background
 
-  Parameters:
-    id        — section id matching navbar anchor, e.g. "publications"
-    title     — section heading
-    all_url   — URL to full list page
-    all_label — link text for see-all
-    cards     — pre-rendered HTML string of cards
+  Layout:
+    col-lg-4  — section title + "see all" link, vertically centred
+    col-lg-8  — cards, vertically centred
+
+  The section takes full viewport height (min-height: 100vh) with flex
+  centering. On mobile both columns stack naturally.
 */}}
 
 {{ $id       := .id }}
@@ -17,23 +22,31 @@
 {{ $allURL   := .all_url }}
 {{ $allLabel := .all_label }}
 {{ $cards    := .cards }}
+{{ $altBg    := .alt_bg | default false }}
 
-<section id="{{ $id }}" class="home-section">
-  <div class="container">
-    <div class="row">
+{{ $bgStyle := "" }}
+{{ if $altBg }}
+  {{ $bgStyle = "background-color: var(--bs-tertiary-bg);" }}
+{{ end }}
 
-      <div class="col-12 col-lg-4 section-heading">
-        <h1>{{ $title }}</h1>
+<section id="{{ $id }}"
+         class="d-flex align-items-center"
+         style="min-height: 100vh; {{ $bgStyle | safeCSS }}">
+  <div class="container-md py-5">
+    <div class="row g-5">
+
+      {{/* Left: heading + see-all link */}}
+      <div class="col-lg-4 section-heading">
+        <h2 class="display-6 fw-bold mb-3">{{ $title }}</h2>
         {{ with $allURL }}
-          <p>
-            <a href="{{ . | relURL }}" class="see-all">
-              {{ $allLabel }} <i class="fa-solid fa-angle-right" aria-hidden="true"></i>
-            </a>
-          </p>
+          <a href="{{ . | relURL }}" class="btn btn-outline-primary">
+            {{ $allLabel }} →
+          </a>
         {{ end }}
       </div>
 
-      <div class="col-12 col-lg-8">
+      {{/* Right: cards */}}
+      <div class="col-lg-8">
         {{ $cards | safeHTML }}
       </div>
 

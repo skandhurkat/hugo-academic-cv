@@ -1,50 +1,70 @@
 {{/*
-  home/hero_contact.html — contact section.
-  Matches original Academic theme contact widget style.
+  home/hero_contact.html — contact hero section.
+
+  Shows email, address (linked to Google Maps), and social links with
+  both icons AND text labels (unlike the bio section which is icon-only).
 */}}
 
-{{ $home := .home | default . }}
+{{/* Accept either a plain page (from direct call) or a dict with home + alt_bg */}}
+{{ $home   := .home | default . }}
+{{ $altBg  := .alt_bg | default false }}
+{{ $bgStyle := "" }}
+{{ if $altBg }}{{ $bgStyle = "background-color: var(--bs-tertiary-bg);" }}{{ end }}
 
-<section id="contact" class="home-section">
-  <div class="container">
-    <div class="row contact-widget">
+<section id="contact"
+         class="d-flex align-items-center"
+         style="min-height: 100vh; {{ $bgStyle }}">
+  <div class="container-md py-5">
+    <div class="row g-5">
 
-      <div class="col-12 col-lg-4 section-heading">
-        <h1>Contact</h1>
+      <div class="col-lg-4 section-heading">
+        <h2 class="display-6 fw-bold mb-3">Contact</h2>
+        <p class="text-muted">
+          Feel free to reach out.
+        </p>
       </div>
 
-      <div class="col-12 col-lg-8">
-        <ul class="fa-ul">
+      <div class="col-lg-8">
+        <ul class="list-unstyled" style="font-size: 1rem; line-height: 2;">
 
+          {{/* Email */}}
           {{ with site.Params.author_email }}
-            <li>
-              <i class="fa-li fa-solid fa-envelope fa-2x" aria-hidden="true"></i>
-              <a href="mailto:{{ . }}" itemprop="email">{{ . }}</a>
+            <li class="d-flex align-items-center gap-3">
+              <i class="fa-solid fa-envelope"
+                 style="width: 1.5rem; color: var(--bs-primary);"
+                 aria-hidden="true"></i>
+              <a href="mailto:{{ . }}">{{ . }}</a>
             </li>
           {{ end }}
 
+          {{/* Address → Google Maps */}}
           {{ with $home.Params.address }}
-            <li>
-              <i class="fa-li fa-solid fa-map-marker-alt fa-2x" aria-hidden="true"></i>
-              {{ $q := $home.Params.maps_query | default (. | urlize) }}
-              <a href="https://maps.google.com/?q={{ $q }}"
-                 target="_blank" rel="noopener"
-                 itemprop="address">{{ . }}</a>
+            <li class="d-flex align-items-center gap-3">
+              <i class="fa-solid fa-location-dot"
+                 style="width: 1.5rem; color: var(--bs-primary);"
+                 aria-hidden="true"></i>
+              {{ $mapsURL := printf "https://maps.google.com/?q=%s" ($home.Params.maps_query | default (. | urlize)) }}
+              <a href="{{ $mapsURL }}" target="_blank" rel="noopener">
+                {{ . }}
+              </a>
             </li>
           {{ end }}
 
+          {{/* Social links with text labels */}}
           {{ range $home.Params.social }}
-            {{ if not (hasPrefix .url "mailto:") }}
-              {{ $rel := .rel | default "" }}
-              <li>
-                <i class="fa-li {{ .icon }} fa-2x" aria-hidden="true"></i>
-                <a href="{{ .url }}"
-                   {{ with $rel }}rel="{{ . }}"{{ end }}
-                   target="_blank" rel="noopener">
-                  {{ .name }}
-                </a>
-              </li>
-            {{ end }}
+            {{ $rel := .rel | default "" }}
+            <li class="d-flex align-items-center gap-3">
+              <i class="{{ .icon }}"
+                 style="width: 1.5rem; color: var(--bs-primary);"
+                 aria-hidden="true"></i>
+              <a href="{{ .url }}"
+                 {{ with $rel }}rel="{{ . }}"{{ end }}
+                 {{ if not (hasPrefix .url "mailto:") }}
+                   target="_blank" rel="noopener"
+                 {{ end }}>
+                {{ .name }}
+              </a>
+            </li>
           {{ end }}
 
         </ul>
