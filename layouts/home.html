@@ -28,9 +28,8 @@
 {{/* -------------------------------------------------------------------
   Content sections — iterated in menu weight order.
   We match menu entry names to section types to know which card partial
-  and count param to use.
+  to use.
 ------------------------------------------------------------------- */}}
-{{ $sectionIndex := 1 }}
 
 {{ range site.Menus.main }}
   {{ $menuName := .Name | lower }}
@@ -114,15 +113,12 @@
         "all_label" $allLabel
         "cards"     $cards
     ) }}
-    {{ $sectionIndex = add $sectionIndex 1 }}
   {{ end }}
 
 {{ end }}
 
 {{/* --- Contact --- */}}
-{{/* Contact alternates with the last content section */}}
-{{ $contactAltBg := eq (mod $sectionIndex 2) 1 }}
-{{ partial "home/hero_contact.html" (dict "home" $home "alt_bg" $contactAltBg) }}
+{{ partial "home/hero_contact.html" . }}
 
 {{/* Shared BibTeX modal — needed if publication/patent cards appear */}}
 {{ partial "bibtex_modal.html" . }}
