@@ -66,6 +66,11 @@
       </a>
     </h2>
 
+    {{/* Authors */}}
+    <p class="card-text text-muted mb-2" style="font-size: 0.875rem;">
+      {{- partial "author_list.html" (dict "page" $page "max_authors" 6) -}}.
+    </p>
+
     {{/* Categories as small badges */}}
     {{ with $page.Params.categories }}
       <div class="d-flex flex-wrap gap-1 mb-2">

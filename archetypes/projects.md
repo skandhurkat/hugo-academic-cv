@@ -10,6 +10,10 @@ end_date = 'present'
 
 status = 'active'    # active | completed | archived
 
+# Authors — leave blank to default to site params.author_name.
+# For collaborations: authors = ["Alice Smith", "Bob Jones"]
+authors = []
+
 # Categories become a Hugo taxonomy — browsable at /categories/<term>/.
 # Use slugs: lowercase, hyphens, no spaces. e.g. ["machine-learning", "open-source"]
 #
