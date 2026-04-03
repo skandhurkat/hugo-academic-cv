@@ -58,7 +58,7 @@
   end }}{{ end }}">
 
 {{/* --- Favicon --- */}}
-<link rel="icon" href="{{ "favicon.ico" | relURL }}">
+<link rel="icon" href="{{ .Site.Params.favicon | default "favicon.ico" | relURL }}">
 
 {{/* -----------------------------------------------------------------------
   Font Awesome 7 (free) — icons for social links, buttons, UI.
