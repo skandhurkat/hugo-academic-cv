@@ -22,9 +22,18 @@
   {{ $authorDisplay = site.Params.author_name }}
 {{ end }}
 
-{{/* Count headings to decide whether to show ToC */}}
-{{ $headings   := .Fragments.Headings }}
-{{ $showToc    := ge (len $headings) 3 }}
+{{/* Count headings recursively — .Fragments.Headings is a tree,
+     so a single h2 with 5 h3 children counts as 1 at the top level.
+     We flatten it by counting h2s plus all their h3 children. */}}
+{{ $headings  := .Fragments.Headings }}
+{{ $headingCount := 0 }}
+{{ range $headings }}
+  {{ $headingCount = add $headingCount 1 }}
+  {{ range .Headings }}
+    {{ $headingCount = add $headingCount 1 }}
+  {{ end }}
+{{ end }}
+{{ $showToc := ge $headingCount 3 }}
 
 <div class="container py-4">
   <div class="row">
@@ -149,77 +158,93 @@
 {{ end }}
 
 {{ define "scripts" }}
-{{ if .Fragments.Headings }}
-{{ if ge (len .Fragments.Headings) 3 }}
+{{ $headingCount := 0 }}
+{{ range .Fragments.Headings }}
+  {{ $headingCount = add $headingCount 1 }}
+  {{ range .Headings }}
+    {{ $headingCount = add $headingCount 1 }}
+  {{ end }}
+{{ end }}
+{{ if ge $headingCount 3 }}
 <script>
-/*
-  ToC scrollspy + expand/collapse for nested h3 sections.
-
-  How it works:
-    1. Bootstrap scrollspy is initialised on #post-body, targeting #toc-nav.
-       It adds/removes the "active" class on ToC links as the user scrolls.
-    2. We listen to Bootstrap's activate.bs.scrollspy event to know which
-       link just became active.
-    3. When an h2-level link becomes active, we show its child <ul> (h3 list)
-       and collapse all other h2 child lists.
-    4. When an h3-level link becomes active, we ensure its parent h2's child
-       list stays open.
-
-  The ToC nav structure (built by toc.html):
-    <nav id="toc-nav">
-      <ul>
-        <li class="toc-h2">
-          <a href="#section-1">Section 1</a>
-          <ul class="toc-children collapse">   ← hidden until parent active
-            <li class="toc-h3"><a href="#subsection-1-1">...</a></li>
-          </ul>
-        </li>
-      </ul>
-    </nav>
-*/
-
 (function () {
+  var tocNav = document.getElementById('toc-nav');
+  if (!tocNav) return;
+
+  /*
+    Manual scroll-based ToC highlighter.
+    We can't use Bootstrap ScrollSpy on #post-body because ScrollSpy
+    requires the watched element to be an overflow scroll container.
+    Instead we collect all heading positions on load and update on
+    window scroll.
+  */
+
+  // Collect all headings inside the post body that have a ToC link
   var postBody = document.getElementById('post-body');
-  var tocNav   = document.getElementById('toc-nav');
-  if (!postBody || !tocNav) return;
+  if (!postBody) return;
 
-  // Initialise Bootstrap scrollspy on the post body
-  new bootstrap.ScrollSpy(postBody, {
-    target: '#toc-nav',
-    smoothScroll: true,
-    offset: 80    // account for sticky navbar height
-  });
+  var headings = Array.from(
+    postBody.querySelectorAll('h2[id], h3[id]')
+  );
 
-  // Expand/collapse h3 lists on scrollspy activation
-  postBody.addEventListener('activate.bs.scrollspy', function (e) {
-    var activeLink = e.relatedTarget;  // the <a> that just became active
-    if (!activeLink) return;
+  // Navbar height offset — keep in sync with --navbar-short-height in CSS
+  var OFFSET = 80;
 
-    var activeLi = activeLink.closest('li');
-    if (!activeLi) return;
-
-    var isH2 = activeLi.classList.contains('toc-h2');
-    var isH3 = activeLi.classList.contains('toc-h3');
-
-    if (isH2) {
-      // Collapse all h3 child lists, then open this one
-      tocNav.querySelectorAll('.toc-children').forEach(function (ul) {
-        ul.classList.add('collapse');
-      });
-      var children = activeLi.querySelector('.toc-children');
-      if (children) children.classList.remove('collapse');
-
-    } else if (isH3) {
-      // Keep the parent h2's child list open
-      var parentLi = activeLi.closest('.toc-h2');
-      if (parentLi) {
-        var children = parentLi.querySelector('.toc-children');
-        if (children) children.classList.remove('collapse');
+  function getActiveHeading() {
+    // Walk headings bottom-up; return the last one above the fold
+    var scrollY = window.scrollY + OFFSET + 8;
+    var active  = null;
+    for (var i = 0; i < headings.length; i++) {
+      if (headings[i].getBoundingClientRect().top + window.scrollY <= scrollY) {
+        active = headings[i];
       }
     }
-  });
+    return active;
+  }
+
+  function updateToc() {
+    var active = getActiveHeading();
+
+    // Clear all active states
+    tocNav.querySelectorAll('.nav-link').forEach(function(a) {
+      a.classList.remove('active');
+    });
+
+    // Collapse all h3 child lists
+    tocNav.querySelectorAll('.toc-children').forEach(function(ul) {
+      ul.classList.add('collapse');
+    });
+
+    if (!active) return;
+
+    // Find the matching ToC link by href
+    var activeLink = tocNav.querySelector('a[href="#' + active.id + '"]');
+    if (!activeLink) return;
+
+    activeLink.classList.add('active');
+
+    var li = activeLink.closest('li');
+    if (!li) return;
+
+    if (li.classList.contains('toc-h2')) {
+      // Open this h2's children
+      var children = li.querySelector('.toc-children');
+      if (children) children.classList.remove('collapse');
+
+    } else if (li.classList.contains('toc-h3')) {
+      // Open parent h2's children
+      var parentLi = li.closest('.toc-h2');
+      if (parentLi) {
+        var parentChildren = parentLi.querySelector('.toc-children');
+        if (parentChildren) parentChildren.classList.remove('collapse');
+      }
+    }
+  }
+
+  window.addEventListener('scroll', updateToc, { passive: true });
+  // Run once on load in case page is loaded mid-scroll
+  updateToc();
 })();
 </script>
-{{ end }}
 {{ end }}
 {{ end }}

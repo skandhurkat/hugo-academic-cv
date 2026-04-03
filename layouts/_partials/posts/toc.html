@@ -34,42 +34,44 @@
   </p>
 
   <ul class="nav flex-column" style="line-height: 1.4;">
-    {{ range $headings }}
-      {{/*
-        .Level gives the heading level (2 for h2, 3 for h3, etc.)
-        We only handle h2 (top-level) here. h3s are nested below their parent.
-        Hugo's .Fragments.Headings already gives us the tree — h3s appear
-        as .Headings children of their parent h2.
-      */}}
-      {{ if eq .Level 2 }}
-        {{ $hasChildren := gt (len .Headings) 0 }}
+  {{ range $headings }}
+    {{ if .ID }}
+      {{/* Normal case: real h2 with optional h3 children */}}
+      {{ $hasChildren := gt (len .Headings) 0 }}
+      <li class="nav-item toc-h2">
+        <a class="nav-link py-1 px-0 text-muted"
+           href="#{{ .ID }}"
+           style="white-space: normal; word-break: break-word;">
+          {{ .Title }}
+        </a>
+        {{ if $hasChildren }}
+          <ul class="nav flex-column toc-children collapse ps-2 mb-1">
+            {{ range .Headings }}
+              <li class="nav-item toc-h3">
+                <a class="nav-link py-1 px-0 text-muted"
+                   href="#{{ .ID }}"
+                   style="white-space: normal; word-break: break-word; font-size: 0.8rem;">
+                  {{ .Title }}
+                </a>
+              </li>
+            {{ end }}
+          </ul>
+        {{ end }}
+      </li>
+    {{ else }}
+      {{/* Phantom parent — post uses h3 as top level, no h2s.
+           Promote children to top level, styled as h2 entries. */}}
+      {{ range .Headings }}
         <li class="nav-item toc-h2">
           <a class="nav-link py-1 px-0 text-muted"
              href="#{{ .ID }}"
              style="white-space: normal; word-break: break-word;">
             {{ .Title }}
           </a>
-
-          {{/* h3 children — start collapsed, opened by JS on scroll */}}
-          {{ if $hasChildren }}
-            <ul class="nav flex-column toc-children collapse ps-2 mb-1">
-              {{ range .Headings }}
-                {{ if eq .Level 3 }}
-                  <li class="nav-item toc-h3">
-                    <a class="nav-link py-1 px-0 text-muted"
-                       href="#{{ .ID }}"
-                       style="white-space: normal; word-break: break-word;
-                              font-size: 0.8rem;">
-                      {{ .Title }}
-                    </a>
-                  </li>
-                {{ end }}
-              {{ end }}
-            </ul>
-          {{ end }}
         </li>
       {{ end }}
     {{ end }}
+  {{ end }}
   </ul>
 
 </nav>
