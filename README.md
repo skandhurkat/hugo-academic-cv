@@ -48,7 +48,7 @@ configure it:
 
 ```toml
 baseURL        = 'https://example.com'
-languageCode   = 'en-US'
+locale         = 'en-US'
 title          = 'Example Site'
 theme          = 'academic-cv'
 
