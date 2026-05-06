@@ -16,10 +16,13 @@
   This only affects anchor links — full page links are handled by Hugo's
   .IsMenuCurrent check in navbar.html.
 -->
-<body data-bs-spy="scroll"
+<body
+  {{- if .IsHome -}}
+      data-bs-spy="scroll"
       data-bs-target="#main-navbar"
       data-bs-smooth-scroll="true"
-      tabindex="0">
+      tabindex="0"
+  {{- end -}}>
   <header>
     {{ partial "navbar.html" . }}
   </header>
